@@ -63,4 +63,8 @@ dependencies {
     val hilt_version = "2.44"
     implementation("com.google.dagger:hilt-android:$hilt_version")
     kapt("com.google.dagger:hilt-android-compiler:$hilt_version")
+
+    // Coroutines
+    val coroutines_version = "1.6.4"
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version")
 }
