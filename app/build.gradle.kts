@@ -67,4 +67,11 @@ dependencies {
     // Coroutines
     val coroutines_version = "1.6.4"
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version")
+
+    // Retrofit
+    val retrofit_version = "2.9.0"
+    val logger_version = "4.9.3"
+    implementation ("com.squareup.retrofit2:retrofit:$retrofit_version")
+    implementation ("com.squareup.retrofit2:converter-moshi:$retrofit_version")
+    implementation ("com.squareup.okhttp3:logging-interceptor:$logger_version")
 }
