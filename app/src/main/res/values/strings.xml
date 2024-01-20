@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Rasad</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="edt_hint_mobile_number">Mobile Number</string>
+    <string name="btn_txt_enter">Enter</string>
+    <string name="txt_enter_desc">Type your mobile number to enter the app.\nExample: 09123456789</string>
 </resources>
