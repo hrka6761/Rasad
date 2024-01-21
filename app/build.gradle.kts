@@ -60,17 +60,17 @@ dependencies {
     implementation("androidx.navigation:navigation-dynamic-features-fragment:$nav_version")
 
     // Hilt
-    val hilt_version = "2.44"
+    val hilt_version = "2.50"
     implementation("com.google.dagger:hilt-android:$hilt_version")
     kapt("com.google.dagger:hilt-android-compiler:$hilt_version")
 
     // Coroutines
-    val coroutines_version = "1.6.4"
+    val coroutines_version = "1.7.3"
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version")
 
     // Retrofit
     val retrofit_version = "2.9.0"
-    val logger_version = "4.9.3"
+    val logger_version = "4.12.0"
     implementation ("com.squareup.retrofit2:retrofit:$retrofit_version")
     implementation ("com.squareup.retrofit2:converter-moshi:$retrofit_version")
     implementation ("com.squareup.okhttp3:logging-interceptor:$logger_version")
