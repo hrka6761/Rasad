@@ -18,4 +18,8 @@ interface UserApi {
     @Headers("Accept: application/json")
     @POST("login")
     suspend fun login(@Body loginDataModel: LoginDataModel): Response<UserModel>
+
+    @Headers("Accept: application/json")
+    @POST("register")
+    suspend fun register(@Body userModel: UserModel): Response<UserModel>
 }

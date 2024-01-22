@@ -9,7 +9,7 @@ interface UserRepo {
 
     suspend fun requestOTP(mobileNumber: String): Resource<ResponseBody?>
     suspend fun loginUser(loginDataModel: LoginDataModel): Resource<UserModel?>
-    fun registerUser()
+    suspend fun registerUser(userModel: UserModel): Resource<UserModel?>
     fun editMobileNumber()
     fun editUsername()
     fun editEmail()

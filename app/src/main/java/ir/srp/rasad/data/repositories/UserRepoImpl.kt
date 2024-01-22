@@ -30,8 +30,12 @@ class UserRepoImpl @Inject constructor(private val userApi: UserApi) : UserRepo 
         }
     }
 
-    override fun registerUser() {
-        TODO("Not yet implemented")
+    override suspend fun registerUser(userModel: UserModel): Resource<UserModel?> {
+        return try {
+            userApi.register(userModel).run { result(this) }
+        } catch (e: Exception) {
+            Resource.Error(RetrofitError())
+        }
     }
 
     override fun editMobileNumber() {
