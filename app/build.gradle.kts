@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
+    id("androidx.navigation.safeargs.kotlin")
     kotlin("kapt")
 }
 
@@ -71,7 +72,11 @@ dependencies {
     // Retrofit
     val retrofit_version = "2.9.0"
     val logger_version = "4.12.0"
-    implementation ("com.squareup.retrofit2:retrofit:$retrofit_version")
-    implementation ("com.squareup.retrofit2:converter-moshi:$retrofit_version")
-    implementation ("com.squareup.okhttp3:logging-interceptor:$logger_version")
+    implementation("com.squareup.retrofit2:retrofit:$retrofit_version")
+    implementation("com.squareup.retrofit2:converter-moshi:$retrofit_version")
+    implementation("com.squareup.okhttp3:logging-interceptor:$logger_version")
+
+    // PinView
+    val pin_view_version = "v1.5"
+    implementation("com.github.GoodieBag:Pinview:$pin_view_version")
 }

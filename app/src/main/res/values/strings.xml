@@ -2,5 +2,10 @@
     <string name="app_name">Rasad</string>
     <string name="edt_hint_mobile_number">Mobile Number</string>
     <string name="btn_txt_enter">Enter</string>
+    <string name="btn_txt_send">Send</string>
     <string name="txt_enter_desc">Type your mobile number to enter the app.\nExample: 09123456789</string>
+    <string name="txt_send_otp_desc">Enter the sent OTP</string>
+    <string name="snacbar_incorrect_mobile_number">The mobile number is not correct.</string>
+    <string name="snacbar_incorrect_otp">The code is not correct.</string>
+    <string name="snacbar_empty_mobile_number">Please insert your mobile number.</string>
 </resources>
