@@ -26,6 +26,7 @@ class OtpFragment : BaseFragment() {
     private val viewModel: OtpViewModel by viewModels()
     private lateinit var mobile: String
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -54,7 +55,7 @@ class OtpFragment : BaseFragment() {
 
     private fun initialize() {
         initLoginResponse()
-        initSaveUserDataState()
+        initSaveUserDataResult()
         initPinView()
         initSendOtpButton()
         initMobileTextView()
@@ -64,9 +65,9 @@ class OtpFragment : BaseFragment() {
         binding.mobileTxt.text = mobile
     }
 
-    private fun initSaveUserDataState() {
+    private fun initSaveUserDataResult() {
         lifecycleScope.launch {
-            viewModel.saveUserDataState.collect { response ->
+            viewModel.saveUserDataResult.collect { response ->
                 when (response) {
                     is Resource.Initial -> {}
                     is Resource.Loading -> {}
@@ -96,6 +97,7 @@ class OtpFragment : BaseFragment() {
                     }
 
                     is Resource.Error -> {
+                        navController.navigate(R.id.registerFragment)
                         enableViews()
                     }
                 }
@@ -131,7 +133,7 @@ class OtpFragment : BaseFragment() {
         if (isOtpValid(binding.pinview.value))
             viewModel.login(LoginDataModel(mobile, "111111"))
         else
-            showError(this, getString(R.string.snacbar_incorrect_otp))
+            showError(this, getString(R.string.snackbar_incorrect_otp))
     }
 
     private fun initPinView() {

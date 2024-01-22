@@ -22,8 +22,8 @@ class OtpViewModel @Inject constructor(
 
     private val _sendOtpResponse: MutableStateFlow<Resource<UserModel?>> = MutableStateFlow(Resource.Initial())
     val sendOtpResponse: StateFlow<Resource<UserModel?>> = _sendOtpResponse
-    private val _saveUserDataState: MutableStateFlow<Resource<Boolean>> = MutableStateFlow(Resource.Initial())
-    val saveUserDataState: MutableStateFlow<Resource<Boolean>> = _saveUserDataState
+    private val _saveUserDataResult: MutableStateFlow<Resource<Boolean>> = MutableStateFlow(Resource.Initial())
+    val saveUserDataResult: MutableStateFlow<Resource<Boolean>> = _saveUserDataResult
 
 
     fun login(loginDataModel: LoginDataModel) {
@@ -35,8 +35,8 @@ class OtpViewModel @Inject constructor(
 
     fun saveUserData(userModel: UserModel) {
         viewModelScope.launch(io) {
-            _saveUserDataState.value = Resource.Loading()
-            _saveUserDataState.value = Resource.Success(true)
+            _saveUserDataResult.value = Resource.Loading()
+            _saveUserDataResult.value = Resource.Success(true)
         }
     }
 }

@@ -88,12 +88,12 @@ class LoginFragment : BaseFragment() {
     private fun onClickEnterButton() {
         val mobileNumber = binding.mobileEdt.text.toString()
         if (mobileNumber.isEmpty()) {
-            showError(this, getString(R.string.snacbar_empty_mobile_number))
+            showError(this, getString(R.string.snackbar_empty_mobile_number))
             return
         }
         if (isMobilNumberValid(mobileNumber))
             viewModel.requestOtp(mobileNumber)
         else
-            showError(this, getString(R.string.snacbar_incorrect_mobile_number))
+            showError(this, getString(R.string.snackbar_incorrect_mobile_number))
     }
 }

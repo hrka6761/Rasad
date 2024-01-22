@@ -17,4 +17,18 @@ object Validation {
     }
 
     fun isOtpValid(otp: String): Boolean = otp.length == 6
+
+    fun isUsernameValid(username: String) = username.length < 60
+
+    fun isEmailValid(email: String): Boolean {
+        if (email.length >= 60)
+            return false
+
+        val mobileNumberPattern =
+            "^[a-zA-Z0-9]+(?:\\.[a-zA-Z0-9]+)*@[a-zA-Z0-9]+(?:\\.[a-zA-Z0-9]+)*\$"
+        val pattern: Pattern = Pattern.compile(mobileNumberPattern)
+        val matcher = pattern.matcher(email)
+
+        return matcher.matches()
+    }
 }

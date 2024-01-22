@@ -29,10 +29,10 @@
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/send_otp_txt"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="32dp"
-        android:gravity="center"
+        android:layout_margin="16dp"
+        android:gravity="start"
         android:text="@string/txt_send_otp_desc"
         app:layout_constraintBottom_toTopOf="@+id/pinview"
         app:layout_constraintEnd_toEndOf="parent"
