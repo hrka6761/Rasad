@@ -1,3 +1,10 @@
 package ir.srp.rasad.core.errors
 
-interface Error
+import androidx.fragment.app.Fragment
+
+interface Error {
+
+    var errorMessage: String
+
+    operator fun invoke(fragment: Fragment)
+}

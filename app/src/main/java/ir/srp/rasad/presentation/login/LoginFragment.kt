@@ -57,6 +57,7 @@ class LoginFragment : BaseFragment() {
                     }
 
                     is Resource.Error -> {
+                        response.error(this@LoginFragment)
                         enableViews()
                     }
                 }

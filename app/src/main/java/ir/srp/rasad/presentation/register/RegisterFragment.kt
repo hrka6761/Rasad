@@ -87,6 +87,7 @@ class RegisterFragment : BaseFragment() {
                     }
 
                     is Resource.Error -> {
+                        response.error(this@RegisterFragment)
                         enableViews()
                     }
                 }

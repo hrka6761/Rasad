@@ -24,7 +24,8 @@ class OtpFragment : BaseFragment() {
 
     private lateinit var binding: FragmentOtpBinding
     private val viewModel: OtpViewModel by viewModels()
-    private lateinit var mobile: String
+    lateinit var mobile: String
+        private set
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,7 +98,7 @@ class OtpFragment : BaseFragment() {
                     }
 
                     is Resource.Error -> {
-                        navController.navigate(R.id.registerFragment)
+                        response.error(this@OtpFragment)
                         enableViews()
                     }
                 }

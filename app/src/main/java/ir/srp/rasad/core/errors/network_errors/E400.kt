@@ -5,9 +5,9 @@ import ir.srp.rasad.core.MessageViewer.showError
 import ir.srp.rasad.core.errors.Error
 import javax.inject.Inject
 
-class UnknownError @Inject constructor() : Error {
+class E400 @Inject constructor() : Error {
 
-    override var errorMessage: String = "Unknown error !!!"
+    override var errorMessage: String = "Input is incorrect"
 
     override fun invoke(fragment: Fragment) {
         showError(fragment, errorMessage)
