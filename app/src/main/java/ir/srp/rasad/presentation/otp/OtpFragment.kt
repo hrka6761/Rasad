@@ -73,6 +73,7 @@ class OtpFragment : BaseFragment() {
                     is Resource.Initial -> {}
                     is Resource.Loading -> {}
                     is Resource.Success -> {
+                        viewModel.setUserState()
                         goToHomeFragment()
                     }
 

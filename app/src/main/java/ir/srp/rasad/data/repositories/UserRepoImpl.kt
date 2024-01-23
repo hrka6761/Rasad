@@ -2,7 +2,6 @@ package ir.srp.rasad.data.repositories
 
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.errors.ErrorDetector
-import ir.srp.rasad.core.errors.local_errors.RetrofitError
 import ir.srp.rasad.data.data_sources.UserApi
 import ir.srp.rasad.domain.models.LoginDataModel
 import ir.srp.rasad.domain.models.UserModel
@@ -10,14 +9,15 @@ import ir.srp.rasad.domain.repositories.UserRepo
 import okhttp3.ResponseBody
 import retrofit2.Response
 import javax.inject.Inject
-import javax.inject.Named
 import kotlin.Exception
 
 class UserRepoImpl @Inject constructor(
     private val userApi: UserApi,
     private val errorDetector: ErrorDetector,
-    @Named("Retrofit") private val retrofitError: RetrofitError
 ) : UserRepo {
+
+    private val retrofitError = errorDetector.retrofitError
+
 
     override suspend fun requestOTP(mobileNumber: String): Resource<ResponseBody?> {
         return try {

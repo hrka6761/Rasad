@@ -25,6 +25,11 @@ class ErrorDetector @Inject constructor() {
     @Inject
     lateinit var unknownError: Error
 
+    @Named("Retrofit")
+    @Inject
+    lateinit var retrofitError: Error
+
+
     operator fun <T> get(response: Response<T>): Resource<T?> {
 
         if (errorsList == null) {
