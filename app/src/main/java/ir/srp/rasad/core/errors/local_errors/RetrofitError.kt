@@ -1,7 +1,7 @@
 package ir.srp.rasad.core.errors.local_errors
 
 import androidx.fragment.app.Fragment
-import ir.srp.rasad.core.MessageViewer.showError
+import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.errors.Error
 import javax.inject.Inject
 

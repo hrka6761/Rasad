@@ -9,10 +9,10 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
-import ir.srp.rasad.core.MessageViewer.showError
+import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.Resource
-import ir.srp.rasad.core.Validation.isEmailValid
-import ir.srp.rasad.core.Validation.isUsernameValid
+import ir.srp.rasad.core.utils.Validation.isEmailValid
+import ir.srp.rasad.core.utils.Validation.isUsernameValid
 import ir.srp.rasad.databinding.FragmentRegisterBinding
 import ir.srp.rasad.domain.models.UserModel
 import kotlinx.coroutines.launch

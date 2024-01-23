@@ -1,7 +1,7 @@
 package ir.srp.rasad.core.errors.network_errors
 
 import androidx.fragment.app.Fragment
-import ir.srp.rasad.core.MessageViewer.showWarning
+import ir.srp.rasad.core.utils.MessageViewer.showWarning
 import ir.srp.rasad.core.errors.Error
 import ir.srp.rasad.presentation.otp.OtpFragment
 import ir.srp.rasad.presentation.otp.OtpFragmentDirections

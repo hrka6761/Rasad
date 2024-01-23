@@ -11,9 +11,9 @@ import com.goodiebag.pinview.Pinview.PinViewEventListener
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
-import ir.srp.rasad.core.MessageViewer.showError
+import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.Resource
-import ir.srp.rasad.core.Validation.isOtpValid
+import ir.srp.rasad.core.utils.Validation.isOtpValid
 import ir.srp.rasad.databinding.FragmentOtpBinding
 import ir.srp.rasad.domain.models.LoginDataModel
 import ir.srp.rasad.domain.models.UserModel

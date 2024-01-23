@@ -7,7 +7,7 @@ import ir.srp.rasad.core.Resource
 import ir.srp.rasad.domain.models.LoginDataModel
 import ir.srp.rasad.domain.models.UserModel
 import ir.srp.rasad.domain.usecases.UserStateUseCase
-import ir.srp.rasad.domain.usecases.LoginUseCase
+import ir.srp.rasad.domain.usecases.api_usecases.LoginUseCase
 import ir.srp.rasad.domain.usecases.UserInfoUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow

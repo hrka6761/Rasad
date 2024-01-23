@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.domain.models.UserModel
-import ir.srp.rasad.domain.usecases.RegisterUseCase
+import ir.srp.rasad.domain.usecases.api_usecases.RegisterUseCase
 import ir.srp.rasad.domain.usecases.UserInfoUseCase
 import ir.srp.rasad.domain.usecases.UserStateUseCase
 import kotlinx.coroutines.CoroutineDispatcher

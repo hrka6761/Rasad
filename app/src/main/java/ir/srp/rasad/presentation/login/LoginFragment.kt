@@ -9,9 +9,9 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
-import ir.srp.rasad.core.MessageViewer.showError
+import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.Resource
-import ir.srp.rasad.core.Validation.isMobilNumberValid
+import ir.srp.rasad.core.utils.Validation.isMobilNumberValid
 import ir.srp.rasad.databinding.FragmentLoginBinding
 import kotlinx.coroutines.launch
 
