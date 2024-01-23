@@ -79,4 +79,8 @@ dependencies {
     // PinView
     val pin_view_version = "v1.5"
     implementation("com.github.GoodieBag:Pinview:$pin_view_version")
+
+    // Gson
+    val gson_version = "2.10.1"
+    implementation("com.google.code.gson:gson:$gson_version")
 }
