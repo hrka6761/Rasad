@@ -9,6 +9,7 @@
     <string name="txt_enter_desc">* Type your mobile number to enter the app.\n  (Pattern: 09123456789)</string>
     <string name="txt_send_otp_desc">* Enter the sent OTP.</string>
     <string name="txt_register_desc">* Enter username and email.\n* Username is require and must be unique.\n* Email is optional.</string>
+    <string name="txt_profile">Edit Profile</string>
     <string name="snackbar_incorrect_mobile_number">The mobile number is not correct.</string>
     <string name="snackbar_incorrect_otp">The code is not correct.</string>
     <string name="snackbar_empty_mobile_number">Please insert your mobile number.</string>
