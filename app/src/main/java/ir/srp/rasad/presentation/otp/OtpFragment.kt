@@ -1,6 +1,7 @@
 package ir.srp.rasad.presentation.otp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -94,6 +95,7 @@ class OtpFragment : BaseFragment() {
 
                     is Resource.Success -> {
                         response.data?.let {
+                            Log.i("hamidreza", "$it")
                             saveUserDataInPreference(it)
                         }
                     }
