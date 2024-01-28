@@ -38,14 +38,19 @@ class SettingsFragment : BaseFragment() {
 
 
     private fun initialize() {
-        initProfileButton()
+        initProfileField()
+        initToolbarBackButton()
     }
 
-    private fun initProfileButton() {
+    private fun initProfileField() {
         binding.profile.setOnClickListener { onClickProfile() }
     }
 
     private fun onClickProfile() {
         navController.navigate(R.id.profileFragment)
+    }
+
+    private fun initToolbarBackButton() {
+        binding.backSettingsBtn.setOnClickListener { onBackPressed() }
     }
 }
