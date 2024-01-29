@@ -9,7 +9,6 @@ class UnknownError @Inject constructor() : Error {
 
     override var errorMessage: String = "Unknown error !!!"
 
-    override fun invoke(fragment: Fragment) {
+    override fun invoke(fragment: Fragment) =
         showError(fragment, errorMessage)
-    }
 }

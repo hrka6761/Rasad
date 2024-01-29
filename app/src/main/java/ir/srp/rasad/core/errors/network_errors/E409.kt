@@ -9,7 +9,6 @@ class E409 @Inject constructor() : Error {
 
     override var errorMessage: String = "One of the entries is duplicate."
 
-    override fun invoke(fragment: Fragment) {
+    override fun invoke(fragment: Fragment) =
         showError(fragment, errorMessage)
-    }
 }

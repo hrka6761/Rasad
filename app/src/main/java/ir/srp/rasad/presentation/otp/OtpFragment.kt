@@ -95,7 +95,6 @@ class OtpFragment : BaseFragment() {
 
                     is Resource.Success -> {
                         response.data?.let {
-                            Log.i("hamidreza", "$it")
                             saveUserDataInPreference(it)
                         }
                     }

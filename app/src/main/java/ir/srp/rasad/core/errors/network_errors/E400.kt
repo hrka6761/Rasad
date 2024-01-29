@@ -9,7 +9,6 @@ class E400 @Inject constructor() : Error {
 
     override var errorMessage: String = "Input is incorrect"
 
-    override fun invoke(fragment: Fragment) {
+    override fun invoke(fragment: Fragment) =
         showError(fragment, errorMessage)
-    }
 }

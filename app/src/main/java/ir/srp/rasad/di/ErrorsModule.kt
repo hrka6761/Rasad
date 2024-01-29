@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import ir.srp.rasad.core.errors.Error
+import ir.srp.rasad.core.errors.local_errors.PreferenceError
 import ir.srp.rasad.core.errors.local_errors.RetrofitError
 import ir.srp.rasad.core.errors.network_errors.E400
 import ir.srp.rasad.core.errors.network_errors.E404
@@ -41,4 +42,9 @@ interface ErrorsModule {
     @Singleton
     @Binds
     fun bindRetrofitError(retrofitError: RetrofitError): Error
+
+    @Named("Preference")
+    @Singleton
+    @Binds
+    fun bindPreferenceError(preferenceError: PreferenceError): Error
 }

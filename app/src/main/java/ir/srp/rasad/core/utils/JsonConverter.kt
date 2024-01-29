@@ -8,5 +8,5 @@ class JsonConverter @Inject constructor(private val gson: Gson) {
 
     fun convertObjectToJsonString(obj: Any): String = gson.toJson(obj)
 
-    fun convertJsonStringToObject(jsonString: String, clazz: Type): Any = gson.toJson(jsonString, clazz)
+    fun convertJsonStringToObject(jsonString: String, clazz: Type): Any = gson.fromJson(jsonString, clazz)
 }

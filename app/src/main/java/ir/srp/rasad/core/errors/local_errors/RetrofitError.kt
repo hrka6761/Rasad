@@ -9,7 +9,6 @@ class RetrofitError @Inject constructor() : Error {
 
     override var errorMessage: String = "Network error ..."
 
-    override fun invoke(fragment: Fragment) {
+    override fun invoke(fragment: Fragment) =
         showError(fragment, errorMessage)
-    }
 }
