@@ -16,6 +16,7 @@
     <string name="txt_profile">Edit Profile</string>
     <string name="txt_settings_toolbar_title">Settings</string>
     <string name="txt_profile_toolbar_title">Profile</string>
+    <string name="txt_otp_toolbar_title">Authentication</string>
     <string name="txt_account_title">Account</string>
     <string name="txt_no_email">No email</string>
     <string name="txt_email_title">Email</string>

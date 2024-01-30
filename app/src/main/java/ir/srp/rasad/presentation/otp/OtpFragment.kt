@@ -56,11 +56,16 @@ class OtpFragment : BaseFragment() {
 
 
     private fun initialize() {
+        initToolbarBackButton()
         initLoginResponse()
         initSaveUserDataResult()
         initPinView()
         initSendOtpButton()
         initMobileTextView()
+    }
+
+    private fun initToolbarBackButton() {
+        binding.backOtpBtn.setOnClickListener { onBackPressed() }
     }
 
     private fun initMobileTextView() {
