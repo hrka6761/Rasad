@@ -52,9 +52,14 @@ class RegisterFragment : BaseFragment() {
 
 
     private fun initialize() {
+        initToolbarBackButton()
         initSaveUserDataResult()
         initRegisterResponse()
         initRegisterButton()
+    }
+
+    private fun initToolbarBackButton() {
+        binding.backRegisterBtn.setOnClickListener { onBackPressed() }
     }
 
     private fun initSaveUserDataResult() {
