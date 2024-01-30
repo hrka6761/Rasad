@@ -9,4 +9,6 @@ interface LocalUserDataRepo {
     suspend fun loadUserLoginState(): Boolean
     suspend fun saveUserAccountInfo(userAccountInfo: UserModel)
     suspend fun loadUserAccountInfo(): Resource<UserModel?>
+    suspend fun clearAllUserData()
+    suspend fun clearData(preferenceKey: String)
 }

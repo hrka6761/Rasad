@@ -7,4 +7,7 @@ object Constants {
     const val USER_STATE_PREFERENCE_KEY = "userAccountState"
     const val USER_ACCOUNT_INFO_PREFERENCE_KEY = "userAccountInfo"
     const val TOKEN_HEADER_KEY = "Authorization"
+    const val EDIT_PROFILE_ARG_KEY = "field_type"
+    const val USERNAME_ARG_VALUE = "username"
+    const val EMAIL_ARG_VALUE = "email"
 }

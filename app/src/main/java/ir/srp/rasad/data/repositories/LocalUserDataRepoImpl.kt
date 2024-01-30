@@ -3,7 +3,7 @@ package ir.srp.rasad.data.repositories
 import ir.srp.rasad.core.Constants.USER_ACCOUNT_INFO_PREFERENCE_KEY
 import ir.srp.rasad.core.Constants.USER_STATE_PREFERENCE_KEY
 import ir.srp.rasad.core.Resource
-import ir.srp.rasad.core.errors.local_errors.PreferenceError
+import ir.srp.rasad.core.errors.local_errors.LoadLocalDataError
 import ir.srp.rasad.core.utils.JsonConverter
 import ir.srp.rasad.data.data_sources.UserLocalDataSource
 import ir.srp.rasad.domain.models.UserModel
@@ -13,7 +13,7 @@ import javax.inject.Inject
 class LocalUserDataRepoImpl @Inject constructor(
     private val userLocalDataSource: UserLocalDataSource,
     private val jsonConverter: JsonConverter,
-    private val preferenceError: PreferenceError,
+    private val loadLocalDataError: LoadLocalDataError,
 ) : LocalUserDataRepo {
 
     override suspend fun saveUserLoginState(state: Boolean) =
@@ -38,6 +38,12 @@ class LocalUserDataRepoImpl @Inject constructor(
                 ) as UserModel
             )
         else
-            Resource.Error(preferenceError)
+            Resource.Error(loadLocalDataError)
     }
+
+    override suspend fun clearAllUserData() =
+        userLocalDataSource.clearAllSharedPreferences()
+
+    override suspend fun clearData(preferenceKey: String) =
+        userLocalDataSource.clearSharedPreferences(preferenceKey)
 }

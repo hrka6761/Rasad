@@ -5,7 +5,7 @@ import ir.srp.rasad.core.errors.Error
 import ir.srp.rasad.core.utils.MessageViewer
 import javax.inject.Inject
 
-class PreferenceError @Inject constructor() : Error {
+class LoadLocalDataError @Inject constructor() : Error {
 
     override var errorMessage: String = "Error occurred when Loading data..."
 

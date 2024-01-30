@@ -11,4 +11,8 @@ class UserInfoUseCase @Inject constructor(private val localUserDataRepo: LocalUs
         localUserDataRepo.saveUserAccountInfo(userAccountInfo)
 
     suspend fun loadUserAccountInfo(): Resource<UserModel?> = localUserDataRepo.loadUserAccountInfo()
+
+    suspend fun clearAllUserData() = localUserDataRepo.clearAllUserData()
+
+    suspend fun clearUserData(preferenceKey: String) = localUserDataRepo.clearData(preferenceKey)
 }

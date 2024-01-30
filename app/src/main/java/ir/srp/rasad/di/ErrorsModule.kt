@@ -5,9 +5,10 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import ir.srp.rasad.core.errors.Error
-import ir.srp.rasad.core.errors.local_errors.PreferenceError
+import ir.srp.rasad.core.errors.local_errors.LoadLocalDataError
 import ir.srp.rasad.core.errors.local_errors.RetrofitError
 import ir.srp.rasad.core.errors.network_errors.E400
+import ir.srp.rasad.core.errors.network_errors.E401
 import ir.srp.rasad.core.errors.network_errors.E404
 import ir.srp.rasad.core.errors.network_errors.E409
 import ir.srp.rasad.core.errors.network_errors.UnknownError
@@ -22,6 +23,11 @@ interface ErrorsModule {
     @Singleton
     @Binds
     fun bindE400(e400: E400): Error
+
+    @Named("E401")
+    @Singleton
+    @Binds
+    fun bindE401(e401: E401): Error
 
     @Named("E404")
     @Singleton
@@ -46,5 +52,5 @@ interface ErrorsModule {
     @Named("Preference")
     @Singleton
     @Binds
-    fun bindPreferenceError(preferenceError: PreferenceError): Error
+    fun bindLoadLocalDataError(loadLocalDataError: LoadLocalDataError): Error
 }

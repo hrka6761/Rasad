@@ -62,15 +62,35 @@ class UserRepoImpl @Inject constructor(
         }
     }
 
-    override fun editMobileNumber() {
-        TODO("Not yet implemented")
+    override suspend fun editUsername(token: String, userModel: UserModel): Resource<UserModel?> {
+        return try {
+            val response =
+                userApi.updateUsername(token, userModel)
+            if (response.isSuccessful) {
+                (response.body() as UserModel).token =
+                    response.headers()[TOKEN_HEADER_KEY].toString()
+                Resource.Success(response.body())
+            } else
+                errorDetector[response]
+        } catch (e: Exception) {
+            retrofitError.errorMessage = e.message.toString()
+            Resource.Error(retrofitError)
+        }
     }
 
-    override fun editUsername() {
-        TODO("Not yet implemented")
-    }
-
-    override fun editEmail() {
-        TODO("Not yet implemented")
+    override suspend fun editEmail(token: String, userModel: UserModel): Resource<UserModel?> {
+        return try {
+            val response =
+                userApi.updateEmail(token, userModel)
+            if (response.isSuccessful) {
+                (response.body() as UserModel).token =
+                    response.headers()[TOKEN_HEADER_KEY].toString()
+                Resource.Success(response.body())
+            } else
+                errorDetector[response]
+        } catch (e: Exception) {
+            retrofitError.errorMessage = e.message.toString()
+            Resource.Error(retrofitError)
+        }
     }
 }

@@ -13,6 +13,10 @@ class ErrorDetector @Inject constructor() {
     @Inject
     lateinit var e400: Error
 
+    @Named("E401")
+    @Inject
+    lateinit var e401: Error
+
     @Named("E404")
     @Inject
     lateinit var e404: Error
@@ -35,6 +39,7 @@ class ErrorDetector @Inject constructor() {
         if (errorsList == null) {
             errorsList = HashMap()
             errorsList!![400] = e400
+            errorsList!![401] = e401
             errorsList!![404] = e404
             errorsList!![409] = e409
         }

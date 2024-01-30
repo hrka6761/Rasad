@@ -142,5 +142,5 @@ class RegisterFragment : BaseFragment() {
     }
 
     private fun preparingUserData(username: String, email: String): UserModel =
-        UserModel(username = username, mobileNumber = mobile, email = email)
+        UserModel(username = username, mobile = mobile, email = email)
 }

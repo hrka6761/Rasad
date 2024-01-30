@@ -18,10 +18,10 @@ object Validation {
 
     fun isOtpValid(otp: String): Boolean = otp.length == 6
 
-    fun isUsernameValid(username: String) = username.length < 60
+    fun isUsernameValid(username: String) = username.length < 30
 
     fun isEmailValid(email: String): Boolean {
-        if (email.length >= 60)
+        if (email.length >= 30)
             return false
 
         val mobileNumberPattern =

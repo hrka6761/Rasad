@@ -6,8 +6,10 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 
 interface UserApi {
@@ -22,4 +24,16 @@ interface UserApi {
     @Headers("Accept: application/json")
     @POST("register")
     suspend fun register(@Body userModel: UserModel): Response<UserModel>
+
+    @PUT("edit/username")
+    suspend fun updateUsername(
+        @Header("Authorization") token: String,
+        @Body userModel: UserModel,
+    ): Response<UserModel>
+
+    @PUT("edit/email")
+    suspend fun updateEmail(
+        @Header("Authorization") token: String,
+        @Body userModel: UserModel,
+    ): Response<UserModel>
 }

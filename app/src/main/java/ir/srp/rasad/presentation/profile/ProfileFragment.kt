@@ -6,20 +6,32 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
+import ir.srp.rasad.core.Constants.EDIT_PROFILE_ARG_KEY
+import ir.srp.rasad.core.Constants.USERNAME_ARG_VALUE
+import ir.srp.rasad.core.Constants.EMAIL_ARG_VALUE
 import ir.srp.rasad.core.Resource
+import ir.srp.rasad.core.utils.MessageViewer.showMessage
 import ir.srp.rasad.databinding.FragmentProfileBinding
 import ir.srp.rasad.domain.models.UserModel
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class ProfileFragment : BaseFragment() {
+class ProfileFragment : BaseFragment(), EditCLickListener {
 
     private lateinit var binding: FragmentProfileBinding
     private val viewModel: ProfileViewModel by viewModels()
+    private lateinit var dialog: BottomSheetDialogFragment
 
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        dialog = EditProfileBottomSheet(this)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,10 +53,24 @@ class ProfileFragment : BaseFragment() {
         navController.navigate(R.id.settingsFragment)
     }
 
+    override fun onEditUsername(newUsername: String) {
+        val token = viewModel.loadUserDataResult.value.data?.token.toString()
+        viewModel.updateUserName(token, preparingUserDataToUpdateUsername(newUsername))
+    }
+
+    override fun onEditEmail(newEmail: String) {
+        val token = viewModel.loadUserDataResult.value.data?.token.toString()
+        viewModel.updateEmail(token, preparingUserDataToUpdateEmail(newEmail))
+    }
+
 
     private fun initialize() {
         initLoadUserDataResult()
         initToolbarBackButton()
+        initEmailUsernameButton()
+        initEmailEditButton()
+        initUpdateUsernameResponse()
+        initUpdateEmailResponse()
     }
 
     private fun initLoadUserDataResult() {
@@ -68,7 +94,7 @@ class ProfileFragment : BaseFragment() {
     }
 
     private fun setUserData(userData: UserModel) {
-        binding.mobileTxt.text = userData.mobileNumber
+        binding.mobileTxt.text = userData.mobile
         binding.usernameTxt.text = userData.username
         binding.emailTxt.text =
             if (userData.email.isNullOrEmpty())
@@ -78,5 +104,111 @@ class ProfileFragment : BaseFragment() {
 
     private fun initToolbarBackButton() {
         binding.backProfileBtn.setOnClickListener { onBackPressed() }
+    }
+
+    private fun initEmailUsernameButton() {
+        binding.username.setOnClickListener { onClickUsernameEmail() }
+    }
+
+    private fun onClickUsernameEmail() {
+        val args = Bundle()
+        args.putString(EDIT_PROFILE_ARG_KEY, USERNAME_ARG_VALUE)
+        dialog.arguments = args
+        dialog.show(requireActivity().supportFragmentManager, dialog.tag)
+    }
+
+    private fun initEmailEditButton() {
+        binding.email.setOnClickListener { onClickEditEmail() }
+    }
+
+    private fun onClickEditEmail() {
+        val args = Bundle()
+        args.putString(EDIT_PROFILE_ARG_KEY, EMAIL_ARG_VALUE)
+        dialog.arguments = args
+        dialog.show(requireActivity().supportFragmentManager, dialog.tag)
+    }
+
+    private fun preparingUserDataToUpdateUsername(username: String): UserModel {
+        val id = viewModel.loadUserDataResult.value.data?.id
+        return UserModel(id = id, username = username)
+    }
+
+    private fun preparingUserDataToUpdateEmail(email: String): UserModel {
+        val id = viewModel.loadUserDataResult.value.data?.id
+        return UserModel(id = id, email = email)
+    }
+
+    private fun initUpdateUsernameResponse() {
+        lifecycleScope.launch {
+            viewModel.updateUsernameResponse.collect { response ->
+                when (response) {
+                    is Resource.Initial -> {}
+                    is Resource.Loading -> {}
+                    is Resource.Success -> {
+                        dialog.dismiss()
+                        response.data?.let {
+                            val newUserData = setUsernameAndGetUserModel(it)
+                            setUserData(newUserData)
+                            viewModel.updateUserData(newUserData)
+                            showMessage(
+                                this@ProfileFragment,
+                                getString(R.string.snackbar_successfully_done)
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        dialog.dismiss()
+                        response.error(this@ProfileFragment)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun initUpdateEmailResponse() {
+        lifecycleScope.launch {
+            viewModel.updateEmailResponse.collect { response ->
+                when (response) {
+                    is Resource.Initial -> {}
+                    is Resource.Loading -> {}
+                    is Resource.Success -> {
+                        dialog.dismiss()
+                        response.data?.let {
+                            val newUserData = setEmailAndGetUserModel(it)
+                            setUserData(newUserData)
+                            viewModel.updateUserData(newUserData)
+                            showMessage(
+                                this@ProfileFragment,
+                                getString(R.string.snackbar_successfully_done)
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        dialog.dismiss()
+                        response.error(this@ProfileFragment)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun setUsernameAndGetUserModel(userData: UserModel): UserModel {
+        val id = viewModel.loadUserDataResult.value.data?.id
+        val username = userData.username
+        val mobile = viewModel.loadUserDataResult.value.data?.mobile
+        val email = viewModel.loadUserDataResult.value.data?.email
+        val token = viewModel.loadUserDataResult.value.data?.token
+        return UserModel(id, username, mobile, email, token)
+    }
+
+    private fun setEmailAndGetUserModel(userData: UserModel): UserModel {
+        val id = viewModel.loadUserDataResult.value.data?.id
+        val username = viewModel.loadUserDataResult.value.data?.username
+        val mobile = viewModel.loadUserDataResult.value.data?.mobile
+        val email = userData.email
+        val token = viewModel.loadUserDataResult.value.data?.token
+        return UserModel(id, username, mobile, email, token)
     }
 }

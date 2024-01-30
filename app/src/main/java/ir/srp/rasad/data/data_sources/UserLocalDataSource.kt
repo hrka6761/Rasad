@@ -33,4 +33,14 @@ class UserLocalDataSource @Inject constructor(
 
     suspend fun loadString(preferenceKey: String, defaultValue: String?): String? =
         sharedPreferences.getString(preferenceKey, defaultValue)
+
+    suspend fun clearAllSharedPreferences() {
+        editor.clear()
+        editor.apply()
+    }
+
+    suspend fun clearSharedPreferences(preferenceKey: String) {
+        editor.remove(preferenceKey)
+        editor.apply()
+    }
 }

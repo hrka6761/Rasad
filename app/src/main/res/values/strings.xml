@@ -8,6 +8,7 @@
     <string name="btn_txt_enter">Enter</string>
     <string name="btn_txt_send">Send</string>
     <string name="btn_txt_register">Register</string>
+    <string name="btn_txt_update">Update %1$s</string>
 
     <string name="txt_enter_desc">* Type your mobile number to enter the app.\n  (Pattern: 09123456789)</string>
     <string name="txt_send_otp_desc">* Enter the sent OTP.</string>
@@ -20,6 +21,7 @@
     <string name="txt_email_title">Email</string>
     <string name="txt_username_title">Username</string>
     <string name="txt_mobile_title">Mobile</string>
+    <string name="txt_edit_profile_bottom_sheet_desc">Please insert your new %1$s</string>
 
     <string name="snackbar_incorrect_mobile_number">The mobile number is not correct.</string>
     <string name="snackbar_incorrect_otp">The code is not correct.</string>
@@ -27,6 +29,10 @@
     <string name="snackbar_empty_username">Username is require.</string>
     <string name="snackbar_invalid_username">Username is not valid.</string>
     <string name="snackbar_invalid_email">Email is not valid.</string>
+    <string name="snackbar_empty_field">"Please fill the %1$s"</string>
+    <string name="snackbar_successfully_done">Successfully done.</string>
 
     <string name="img_content_description">Settings</string>
+
+    <string name="tag_edit_profile_bottom_sheet">edit_profile_dialog</string>
 </resources>

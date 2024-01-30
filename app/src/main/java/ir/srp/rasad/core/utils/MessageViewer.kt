@@ -22,4 +22,12 @@ object MessageViewer {
     fun showWarning(context: Context, message: String, duration: Int = Toast.LENGTH_SHORT) {
         Toast.makeText(context, message, duration).show()
     }
+
+    fun showMessage(fragment: Fragment, message: String, duration: Int = Snackbar.LENGTH_SHORT) {
+        Snackbar.make(fragment.requireView(), message, duration).show()
+    }
+
+    fun showMessage(context: Context, message: String, duration: Int = Toast.LENGTH_SHORT) {
+        Toast.makeText(context, message, duration).show()
+    }
 }
