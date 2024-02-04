@@ -9,6 +9,8 @@
     <string name="btn_txt_send">Send</string>
     <string name="btn_txt_register">Register</string>
     <string name="btn_txt_update">Update %1$s</string>
+    <string name="btn_txt_on">ON</string>
+    <string name="btn_txt_off">OFF</string>
 
     <string name="txt_login_toolbar_title">Login</string>
     <string name="txt_settings_toolbar_title">Settings</string>

@@ -8,6 +8,7 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
+import ir.srp.rasad.core.utils.MessageViewer
 import ir.srp.rasad.databinding.FragmentHomeBinding
 
 @AndroidEntryPoint
@@ -35,6 +36,7 @@ class HomeFragment : BaseFragment() {
 
     private fun initialize() {
         initSettingsButton()
+        initOnOffButton()
     }
 
     private fun initSettingsButton() {
@@ -43,5 +45,21 @@ class HomeFragment : BaseFragment() {
 
     private fun onClickSettings() {
         navController.navigate(R.id.settingsFragment)
+    }
+
+    private fun initOnOffButton() {
+        binding.onOffBtn.setOnClickListener { onShortClickOnOff() }
+        binding.onOffBtn.setOnLongClickListener {
+            onLongClickOnOff()
+            true
+        }
+    }
+
+    private fun onLongClickOnOff() {
+        MessageViewer.showMessage(requireContext(), "Long")
+    }
+
+    private fun onShortClickOnOff() {
+        MessageViewer.showMessage(requireContext(), "Short")
     }
 }
