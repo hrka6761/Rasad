@@ -86,4 +86,8 @@ dependencies {
     // Gson
     val gson_version = "2.10.1"
     implementation("com.google.code.gson:gson:$gson_version")
+
+    // WebRTC
+    val webrtc_version = "1.0.23995"
+    implementation("org.webrtc:google-webrtc:$webrtc_version")
 }
