@@ -11,6 +11,8 @@
     <string name="btn_txt_update">Update %1$s</string>
     <string name="btn_txt_on">ON</string>
     <string name="btn_txt_off">OFF</string>
+    <string name="btn_txt_positive_dialog">OK</string>
+    <string name="btn_txt_negative_dialog">Cancel</string>
 
     <string name="txt_login_toolbar_title">Login</string>
     <string name="txt_settings_toolbar_title">Settings</string>
@@ -37,6 +39,13 @@
     <string name="snackbar_invalid_email">Email is not valid.</string>
     <string name="snackbar_empty_field">"Please fill the %1$s"</string>
     <string name="snackbar_successfully_done">Successfully done.</string>
+    <string name="snackbar_basic_location_negative_msg">You cannot use this app without access location.</string>
+    <string name="snackbar_background_location_negative_msg">You cannot use this app without set max level permission.</string>
+    <string name="snackbar_notification_negative_msg">You cannot use this app without access post notification.</string>
+    <string name="snackbar_short_click_msg">Please long click.</string>
+    <string name="snackbar_notification_dialog_msg">You need to grant notification permission to display app operations when you closing the app.</string>
+    <string name="snackbar_basic_location_dialog_msg">You need to grant location permission for the app to access your current location.</string>
+    <string name="snackbar_background_location_dialog_msg">To continue working with the program after closing it, you must set the location access to the highest level.\n\"Allow all the time\"</string>
 
     <string name="img_content_description">Settings</string>
 

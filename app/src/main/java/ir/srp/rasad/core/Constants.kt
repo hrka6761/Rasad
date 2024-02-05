@@ -10,4 +10,6 @@ object Constants {
     const val EDIT_PROFILE_ARG_KEY = "field_type"
     const val USERNAME_ARG_VALUE = "username"
     const val EMAIL_ARG_VALUE = "email"
+    const val COARSE_RESULT_KEY = "android.permission.ACCESS_COARSE_LOCATION"
+    const val FINE_RESULT_KEY = "android.permission.ACCESS_FINE_LOCATION"
 }
