@@ -4,7 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import ir.srp.rasad.core.Constants.BASE_URL
+import ir.srp.rasad.core.Constants.HTTP_BASE_URL
 import ir.srp.rasad.data.data_sources.UserApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -36,7 +36,7 @@ class APIModule {
         Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create())
             .client(okHttpClient)
-            .baseUrl(BASE_URL)
+            .baseUrl(HTTP_BASE_URL)
             .build()
 
     @Singleton
