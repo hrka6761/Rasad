@@ -1,10 +1,18 @@
 package ir.srp.rasad.presentation.home
 
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.content.ComponentName
+import android.content.Context.BIND_AUTO_CREATE
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
+import android.os.Looper
+import android.os.Message
+import android.os.Messenger
 import ir.srp.rasad.core.Constants.COARSE_RESULT_KEY
 import ir.srp.rasad.core.Constants.FINE_RESULT_KEY
 import android.view.LayoutInflater
@@ -16,9 +24,13 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
+import ir.srp.rasad.core.Constants.SERVICE_INTENT_EXTRA_KEY
+import ir.srp.rasad.core.Constants.START_SERVICE_DATA
+import ir.srp.rasad.core.Constants.STOP_SERVICE_DATA
 import ir.srp.rasad.core.utils.MessageViewer.showWarning
 import ir.srp.rasad.core.utils.PermissionManager
 import ir.srp.rasad.databinding.FragmentHomeBinding
+import ir.srp.rasad.presentation.services.MainService
 
 @AndroidEntryPoint
 class HomeFragment : BaseFragment() {
@@ -26,12 +38,20 @@ class HomeFragment : BaseFragment() {
     private lateinit var binding: FragmentHomeBinding
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var permissionManager: PermissionManager
+    private var homeMessenger: Messenger? = null
+    private lateinit var serviceMessenger: Messenger
+    private val handler = Handler()
+    private var isServiceBound = false
+    private var isServiceStarted = false
+    private val serviceConnection = ServiceConnection()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         permissionManager = PermissionManager(this, PermissionsRequestCallback())
+        serviceMessenger = Messenger(handler)
+        bindService()
     }
 
     override fun onCreateView(
@@ -48,6 +68,11 @@ class HomeFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         initialize()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unBindService()
     }
 
 
@@ -117,7 +142,10 @@ class HomeFragment : BaseFragment() {
             return
         }
 
-        startService()
+        if (isServiceStarted)
+            stopService()
+        else
+            startService()
     }
 
     private fun onShortClickOnOff() {
@@ -140,8 +168,34 @@ class HomeFragment : BaseFragment() {
             .show()
     }
 
-    private fun startService() {
+    private fun bindService() {
+        if (!isServiceBound) {
+            val intent = Intent(requireContext(), MainService::class.java)
+            requireContext().bindService(intent, serviceConnection, BIND_AUTO_CREATE)
+        }
+    }
 
+    private fun unBindService() {
+        requireContext().unbindService(serviceConnection)
+        isServiceBound = false
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun startService() {
+        val intent = Intent(requireContext(), MainService::class.java)
+        intent.putExtra(SERVICE_INTENT_EXTRA_KEY, START_SERVICE_DATA)
+        requireContext().startForegroundService(intent)
+        binding.onOffBtn.text = getString(R.string.btn_txt_off)
+        isServiceStarted = true
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun stopService() {
+        val intent = Intent(requireContext(), MainService::class.java)
+        intent.putExtra(SERVICE_INTENT_EXTRA_KEY, STOP_SERVICE_DATA)
+        requireContext().startForegroundService(intent)
+        binding.onOffBtn.text = getString(R.string.btn_txt_on)
+        isServiceStarted = false
     }
 
 
@@ -162,7 +216,31 @@ class HomeFragment : BaseFragment() {
                 }
             }
 
-            startService()
+            if (isServiceStarted)
+                stopService()
+            else
+                startService()
+        }
+    }
+
+    private inner class ServiceConnection : android.content.ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            homeMessenger = Messenger(service)
+            isServiceBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            homeMessenger = null
+            isServiceBound = false
+        }
+    }
+
+    @SuppressLint("HandlerLeak")
+    private inner class Handler : android.os.Handler(Looper.getMainLooper()) {
+        override fun handleMessage(msg: Message) {
+            when (msg) {
+                else -> super.handleMessage(msg)
+            }
         }
     }
 }

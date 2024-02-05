@@ -12,4 +12,7 @@ object Constants {
     const val EMAIL_ARG_VALUE = "email"
     const val COARSE_RESULT_KEY = "android.permission.ACCESS_COARSE_LOCATION"
     const val FINE_RESULT_KEY = "android.permission.ACCESS_FINE_LOCATION"
+    const val SERVICE_INTENT_EXTRA_KEY = "data"
+    const val START_SERVICE_DATA = "startService"
+    const val STOP_SERVICE_DATA = "stopService"
 }
