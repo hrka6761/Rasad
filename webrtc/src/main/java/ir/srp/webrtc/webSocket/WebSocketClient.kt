@@ -1,12 +1,13 @@
 package ir.srp.webrtc.webSocket
 
-import ir.srp.webrtc.core.Constants.CLOSE_WEBSOCKET_STATUS_CODE
-import ir.srp.webrtc.core.Constants.CLOSE_WEBSOCKET_STATUS_REASON
+import ir.srp.webrtc.utils.Constants.CLOSE_WEBSOCKET_STATUS_CODE
+import ir.srp.webrtc.utils.Constants.CLOSE_WEBSOCKET_STATUS_REASON
+import ir.srp.webrtc.models.DataModel
+import ir.srp.webrtc.utils.JsonConverter.convertObjectToJsonString
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
-import okio.ByteString
 
 class WebSocketClient(
     private val url: String,
@@ -16,23 +17,22 @@ class WebSocketClient(
     private val okHttpClient = OkHttpClient()
     private lateinit var request: Request
     private lateinit var webSocket: WebSocket
-    private val isConnected = false
+    private var isConnected = false
 
 
-    fun connect() {
+    fun createConnection() {
         request = Request.Builder().url(url).build()
         webSocket = okHttpClient.newWebSocket(request, listener)
+        isConnected = true
     }
 
-    fun disConnect() {
+    fun removeConnection() {
         webSocket.close(CLOSE_WEBSOCKET_STATUS_CODE, CLOSE_WEBSOCKET_STATUS_REASON)
+        isConnected = false
     }
 
-    fun sendData(data: ByteString) {
-        webSocket.send(data)
-    }
-
-    fun sendData(message: String) {
-        webSocket.send(message)
+    fun sendData(data: DataModel) {
+        if (isConnected)
+            webSocket.send(convertObjectToJsonString(data))
     }
 }

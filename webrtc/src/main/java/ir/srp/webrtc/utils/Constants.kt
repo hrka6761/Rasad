@@ -1,4 +1,4 @@
-package ir.srp.webrtc.core
+package ir.srp.webrtc.utils
 
 object Constants {
 

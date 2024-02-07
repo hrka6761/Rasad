@@ -48,4 +48,8 @@ dependencies {
     // okhttp3
     val okhttp3_version = "4.12.0"
     implementation("com.squareup.okhttp3:okhttp:$okhttp3_version")
+
+    // Gson
+    val gson_version = "2.10.1"
+    implementation("com.google.code.gson:gson:$gson_version")
 }
