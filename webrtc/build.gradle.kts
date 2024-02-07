@@ -44,4 +44,8 @@ dependencies {
     // WebRTC
     val webrtc_version = "1.0.23995"
     implementation("org.webrtc:google-webrtc:$webrtc_version")
+
+    // okhttp3
+    val okhttp3_version = "4.12.0"
+    implementation("com.squareup.okhttp3:okhttp:$okhttp3_version")
 }
