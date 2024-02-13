@@ -1,9 +1,9 @@
 package ir.srp.webrtc
 
 import android.app.Application
+import ir.srp.webrtc.data_converters.ChannelData
 import ir.srp.webrtc.exceptions.IllegalUrlException
 import ir.srp.webrtc.exceptions.NoHandShakeException
-import ir.srp.webrtc.utils.ChannelEventsListener
 import ir.srp.webrtc.models.DataModel
 import ir.srp.webrtc.models.DataType
 import ir.srp.webrtc.utils.Validation.isValidSignalingServerUrl
@@ -14,7 +14,7 @@ import ir.srp.webrtc.observers.DataChannelObserver
 import ir.srp.webrtc.observers.PeerConnectionObserver
 import ir.srp.webrtc.observers.CallSdpObserver
 import ir.srp.webrtc.observers.PeerSdpObserver
-import ir.srp.webrtc.utils.JsonConverter.convertJsonStringToObject
+import ir.srp.webrtc.data_converters.JsonConverter.convertJsonStringToObject
 import okio.IOException
 import org.webrtc.DataChannel
 import org.webrtc.DefaultVideoDecoderFactory
@@ -173,7 +173,7 @@ class P2PChannel private constructor(
         peerConnectionObserver = PeerConnectionObserver(
             onProvideDataChannel = { dataChannel ->
                 this.dataChannel = dataChannel
-                eventsListener?.onCreateP2PChannel(dataChannel)
+                eventsListener?.onCreateP2PChannel()
                 isChannelReady = true
             },
             onProvideIceCandidate = { iceCandidate ->
@@ -315,9 +315,10 @@ class P2PChannel private constructor(
     }
 
     @Throws(IOException::class)
-    fun sendData(buffer: DataChannel.Buffer) {
+    fun sendData(channelData: ChannelData) {
         if (doHandshake)
-            dataChannel?.send(buffer)
+            for (data in channelData())
+                dataChannel?.send(data)
         else
             throw NoHandShakeException()
     }

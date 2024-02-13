@@ -1,7 +1,7 @@
 package ir.srp.webrtc.webSocket
 
 import ir.srp.webrtc.models.DataModel
-import ir.srp.webrtc.utils.JsonConverter.convertJsonStringToObject
+import ir.srp.webrtc.data_converters.JsonConverter.convertJsonStringToObject
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener

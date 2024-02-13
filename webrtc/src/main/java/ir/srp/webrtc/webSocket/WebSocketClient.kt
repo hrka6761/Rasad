@@ -3,7 +3,7 @@ package ir.srp.webrtc.webSocket
 import ir.srp.webrtc.utils.Constants.CLOSE_WEBSOCKET_STATUS_CODE
 import ir.srp.webrtc.utils.Constants.CLOSE_WEBSOCKET_STATUS_REASON
 import ir.srp.webrtc.models.DataModel
-import ir.srp.webrtc.utils.JsonConverter.convertObjectToJsonString
+import ir.srp.webrtc.data_converters.JsonConverter.convertObjectToJsonString
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket

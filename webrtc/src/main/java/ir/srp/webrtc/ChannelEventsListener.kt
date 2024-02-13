@@ -1,15 +1,16 @@
-package ir.srp.webrtc.utils
+package ir.srp.webrtc
 
 import ir.srp.webrtc.models.DataModel
 import ir.srp.webrtc.webSocket.WebSocketClient
-import org.webrtc.DataChannel
+import java.io.File
 
 interface ChannelEventsListener {
 
     fun onSuccessSignalingServerConnection(webSocket: WebSocketClient)
     fun onFailedSignalingServerConnection(t: Throwable)
     fun onCLoseSignalingServerConnection(code: Int, reason: String)
-    fun onCreateP2PChannel(dataChannel: DataChannel?)
+    fun onCreateP2PChannel()
     fun onReceiveSignalingData(data: DataModel)
-    fun onReceiveChannelData(buffer: DataChannel.Buffer?)
+    fun onReceiveChannelTextData(text: String?)
+    fun onReceiveChannelFileData(byteArray: ByteArray?)
 }
