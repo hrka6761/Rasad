@@ -15,6 +15,11 @@ import ir.srp.webrtc.observers.PeerConnectionObserver
 import ir.srp.webrtc.observers.CallSdpObserver
 import ir.srp.webrtc.observers.PeerSdpObserver
 import ir.srp.webrtc.data_converters.JsonConverter.convertJsonStringToObject
+import ir.srp.webrtc.data_converters.JsonConverter.convertObjectToJsonString
+import ir.srp.webrtc.models.P2PConnectionState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okio.IOException
 import org.webrtc.DataChannel
 import org.webrtc.DefaultVideoDecoderFactory
@@ -37,7 +42,6 @@ class P2PChannel private constructor(
     private var iceServers: List<IceServer>,
     private var mediaConstraints: MediaConstraints,
     private var username: String,
-    private var target: String,
     private var eventsListener: ChannelEventsListener?,
 ) {
 
@@ -51,6 +55,7 @@ class P2PChannel private constructor(
     private lateinit var signalingServerConnection: WebSocketClient
     private lateinit var signalingServerListener: WebSocketListener
     private var dataChannel: DataChannel? = null
+    private var target: String? = null
     private var doHandshake: Boolean = false
     private var isChannelReady: Boolean = false
 
@@ -60,7 +65,6 @@ class P2PChannel private constructor(
             private val context: Application,
             private val signalingServerUrl: String,
             private val username: String,
-            private val target: String,
             private val iceServers: List<IceServer>,
         ) {
 
@@ -130,7 +134,6 @@ class P2PChannel private constructor(
                     iceServers,
                     mMediaConstraints,
                     username,
-                    target,
                     mEventsListener
                 )
 
@@ -173,18 +176,24 @@ class P2PChannel private constructor(
         peerConnectionObserver = PeerConnectionObserver(
             onProvideDataChannel = { dataChannel ->
                 this.dataChannel = dataChannel
-                eventsListener?.onCreateP2PChannel()
+                doHandshake = true
+                eventsListener?.onCreateP2PConnection()
                 isChannelReady = true
             },
             onProvideIceCandidate = { iceCandidate ->
                 signalingServerConnection.sendData(
                     DataModel(
-                        type = DataType.IceCandidates,
+                        type = DataType.Ice,
                         username = username,
                         target = target,
-                        data = iceCandidate
+                        data = iceCandidate?.let { convertObjectToJsonString(it) }
                     )
                 )
+            },
+            onConnectionStateChange = { state ->
+                eventsListener?.onP2PConnectionStateChange(state)
+                if (state == P2PConnectionState.DISCONNECTED.name)
+                    eventsListener?.onDestroyP2PConnection()
             }
         )
         initializePeerConnectionFactory()
@@ -236,11 +245,12 @@ class P2PChannel private constructor(
 
     private fun processReceivedSignalingMessage(message: DataModel) {
         when (message.type) {
-            DataType.StartConnection -> {
+            DataType.Handshake -> {
+                this.target = message.username
                 call(target = message.username)
             }
 
-            DataType.Offer -> {
+            DataType.Call -> {
                 setPeerSdp(
                     SessionDescription(
                         SessionDescription.Type.OFFER,
@@ -260,7 +270,7 @@ class P2PChannel private constructor(
                 )
             }
 
-            DataType.IceCandidates -> {
+            DataType.Ice -> {
                 val iceCandidate = convertJsonStringToObject(
                     message.data.toString(),
                     IceCandidate::class.java
@@ -301,24 +311,30 @@ class P2PChannel private constructor(
     }
 
 
-    fun handshake() {
-        signalingServerConnection.sendData(
-            DataModel(
-                type = DataType.StartConnection,
-                username = username,
-                target = target,
-                data = null
-            )
-        )
+    fun handshake(target: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            this@P2PChannel.target = target
 
-        doHandshake = true
+            signalingServerConnection.sendData(
+                DataModel(
+                    type = DataType.Handshake,
+                    username = username,
+                    target = target,
+                    data = null
+                )
+            )
+
+            doHandshake = true
+        }
     }
 
     @Throws(IOException::class)
     fun sendData(channelData: ChannelData) {
         if (doHandshake)
-            for (data in channelData())
-                dataChannel?.send(data)
+            CoroutineScope(Dispatchers.IO).launch {
+                for (data in channelData())
+                    dataChannel?.send(data)
+            }
         else
             throw NoHandShakeException()
     }
