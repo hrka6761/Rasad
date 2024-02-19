@@ -3,7 +3,7 @@ package ir.srp.rasad.presentation.activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import ir.srp.rasad.domain.usecases.UserStateUseCase
+import ir.srp.rasad.domain.usecases.preference_usecase.UserStateUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
