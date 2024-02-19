@@ -16,4 +16,6 @@ object Constants {
     const val SERVICE_INTENT_EXTRA_KEY = "data"
     const val START_SERVICE_DATA = "startService"
     const val STOP_SERVICE_DATA = "stopService"
+    const val CLOSE_WEBSOCKET_STATUS_CODE = 1000
+    const val CLOSE_WEBSOCKET_STATUS_REASON = "disconnect"
 }

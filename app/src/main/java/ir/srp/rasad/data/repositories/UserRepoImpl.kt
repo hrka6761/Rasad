@@ -4,15 +4,20 @@ import ir.srp.rasad.core.Constants.TOKEN_HEADER_KEY
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.errors.ErrorDetector
 import ir.srp.rasad.data.data_sources.UserApi
+import ir.srp.rasad.data.data_sources.UserWebsocket
 import ir.srp.rasad.domain.models.LoginDataModel
 import ir.srp.rasad.domain.models.UserModel
+import ir.srp.rasad.domain.models.WebsocketDataModel
 import ir.srp.rasad.domain.repositories.UserRepo
+import okhttp3.Response
 import okhttp3.ResponseBody
+import okio.ByteString
 import javax.inject.Inject
 import kotlin.Exception
 
 class UserRepoImpl @Inject constructor(
     private val userApi: UserApi,
+    private val userWebsocket: UserWebsocket,
     private val errorDetector: ErrorDetector,
 ) : UserRepo {
 
@@ -92,5 +97,34 @@ class UserRepoImpl @Inject constructor(
             retrofitError.errorMessage = e.message.toString()
             Resource.Error(retrofitError)
         }
+    }
+
+    override suspend fun createChannel(
+        url: String,
+        successCallback: ((response: Response) -> Unit)?,
+        failCallback: ((t: Throwable, response: Response?) -> Unit)?
+    ) {
+        userWebsocket.createConnection(url, successCallback, failCallback)
+    }
+
+    override suspend fun removeChannel(
+        onClosingConnection: ((code: Int, reason: String) -> Unit)?,
+        onClosedConnection: ((code: Int, reason: String) -> Unit)?
+    ) {
+        userWebsocket.removeConnection(onClosingConnection, onClosedConnection)
+    }
+
+    override suspend fun senData(
+        data: WebsocketDataModel,
+        onSendMessageFail: ((t: Throwable, response: Response?) -> Unit)?,
+    ) {
+        userWebsocket.sendData(data, onSendMessageFail)
+    }
+
+    override suspend fun receiveData(
+        onReceiveTextMessage: ((text: String) -> Unit)?,
+        onReceiveBinaryMessage: ((bytes: ByteString) -> Unit)?,
+    ) {
+        userWebsocket.receiveData(onReceiveTextMessage, onReceiveBinaryMessage)
     }
 }
