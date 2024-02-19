@@ -1,5 +1,6 @@
 package ir.srp.rasad.di
 
+import android.app.NotificationManager
 import android.content.Context
 import android.content.SharedPreferences
 import com.google.gson.Gson
@@ -9,7 +10,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import ir.srp.rasad.R
-import ir.srp.rasad.core.utils.JsonConverter
 import javax.inject.Singleton
 
 @Module
@@ -29,4 +29,9 @@ class GlobalModule {
     @Singleton
     @Provides
     fun providesGson(): Gson = Gson()
+
+    @Singleton
+    @Provides
+    fun provideNotificationManager(@ApplicationContext context: Context): NotificationManager =
+        context.getSystemService(NotificationManager::class.java)
 }

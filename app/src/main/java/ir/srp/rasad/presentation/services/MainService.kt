@@ -14,16 +14,19 @@ import android.os.Message
 import android.os.Messenger
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.Constants.SERVICE_INTENT_EXTRA_KEY
 import ir.srp.rasad.core.Constants.START_SERVICE_DATA
 import ir.srp.rasad.core.Constants.STOP_SERVICE_DATA
 
-class MainService : Service() {
+@AndroidEntryPoint
+class MainService(
+    private val notificationManager: NotificationManager
+) : Service() {
 
     private val CHANNEL_ID = "Rasad"
     private val NOTIFICATION_ID = 110
-    private lateinit var notificationManager: NotificationManager
     private lateinit var notificationChannel: NotificationChannel
     private val serviceMessenger: Messenger? = null
     private lateinit var homeMessenger: Messenger
@@ -34,7 +37,6 @@ class MainService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        notificationManager = getSystemService(NotificationManager::class.java)
         createNotificationChannel()
         homeMessenger = Messenger(handler)
     }
