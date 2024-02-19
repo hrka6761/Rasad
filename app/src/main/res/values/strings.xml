@@ -9,8 +9,8 @@
     <string name="btn_txt_send">Send</string>
     <string name="btn_txt_register">Register</string>
     <string name="btn_txt_update">Update %1$s</string>
-    <string name="btn_txt_on">ON</string>
-    <string name="btn_txt_off">OFF</string>
+    <string name="btn_txt_track_me">Track me</string>
+    <string name="btn_txt_track_other">Track other</string>
     <string name="btn_txt_positive_dialog">OK</string>
     <string name="btn_txt_negative_dialog">Cancel</string>
 
@@ -50,4 +50,6 @@
     <string name="img_content_description">Settings</string>
 
     <string name="tag_edit_profile_bottom_sheet">edit_profile_dialog</string>
+    <string name="fab_add_member_content_description">Add member</string>
+    <string name="on_off_fab_content_description">On/Off</string>
 </resources>

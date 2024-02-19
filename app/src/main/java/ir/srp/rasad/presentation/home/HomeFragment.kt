@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -92,8 +93,8 @@ class HomeFragment : BaseFragment() {
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun initOnOffButton() {
-        binding.onOffBtn.setOnClickListener { onShortClickOnOff() }
-        binding.onOffBtn.setOnLongClickListener {
+        binding.onOffFab.setOnClickListener { onShortClickOnOff() }
+        binding.onOffFab.setOnLongClickListener {
             onLongClickOnOff()
             true
         }
@@ -185,7 +186,8 @@ class HomeFragment : BaseFragment() {
         val intent = Intent(requireContext(), MainService::class.java)
         intent.putExtra(SERVICE_INTENT_EXTRA_KEY, START_SERVICE_DATA)
         requireContext().startForegroundService(intent)
-        binding.onOffBtn.text = getString(R.string.btn_txt_off)
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
         isServiceStarted = true
     }
 
@@ -194,7 +196,8 @@ class HomeFragment : BaseFragment() {
         val intent = Intent(requireContext(), MainService::class.java)
         intent.putExtra(SERVICE_INTENT_EXTRA_KEY, STOP_SERVICE_DATA)
         requireContext().startForegroundService(intent)
-        binding.onOffBtn.text = getString(R.string.btn_txt_on)
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
         isServiceStarted = false
     }
 
