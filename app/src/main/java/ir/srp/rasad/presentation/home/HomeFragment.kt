@@ -102,11 +102,14 @@ class HomeFragment : BaseFragment() {
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun onLongClickOnOff() {
-        if (!permissionManager.hasBasicLocationPermission()) {
+        if (!permissionManager.hasPreciseLocationPermission() && !permissionManager.hasApproximateLocationPermission()) {
             showDialog(
                 msg = getString(R.string.snackbar_basic_location_dialog_msg),
                 negativeAction = { dialog ->
-                    showWarning(this, getString(R.string.snackbar_basic_location_negative_msg))
+                    showWarning(
+                        this,
+                        getString(R.string.snackbar_approximate_location_negative_msg)
+                    )
                     dialog.dismiss()
                 }, positiveAction = { _ ->
                     permissionManager.getBasicLocationPermission()
@@ -117,7 +120,7 @@ class HomeFragment : BaseFragment() {
 
         if (!permissionManager.hasBackgroundLocationPermission()) {
             showDialog(
-                msg = getString(R.string.snackbar_basic_location_dialog_msg),
+                msg = getString(R.string.snackbar_background_location_dialog_msg),
                 negativeAction = { dialog ->
                     showWarning(this, getString(R.string.snackbar_background_location_negative_msg))
                     dialog.dismiss()
@@ -208,21 +211,24 @@ class HomeFragment : BaseFragment() {
             for (item in result) {
                 if (!item.value) {
                     val message = when (item.key) {
-                        COARSE_RESULT_KEY, FINE_RESULT_KEY -> getString(R.string.snackbar_basic_location_negative_msg)
+                        COARSE_RESULT_KEY -> getString(R.string.snackbar_approximate_location_negative_msg)
+                        FINE_RESULT_KEY -> getString(R.string.snackbar_precise_location_negative_msg)
                         ACCESS_BACKGROUND_LOCATION -> getString(R.string.snackbar_background_location_negative_msg)
                         else -> getString(R.string.snackbar_notification_negative_msg)
                     }
 
                     showWarning(this@HomeFragment, message)
 
-                    return
+                    if (item.key != FINE_RESULT_KEY)
+                        return
                 }
             }
 
-            if (isServiceStarted)
-                stopService()
-            else
-                startService()
+            if (permissionManager.hasBackgroundLocationPermission() && permissionManager.hasNotificationPermission())
+                if (isServiceStarted)
+                    stopService()
+                else
+                    startService()
         }
     }
 

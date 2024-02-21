@@ -30,8 +30,11 @@ class PermissionManager(
             true
     }
 
-    fun hasBasicLocationPermission() =
-        isPermissionGranted(ACCESS_COARSE_LOCATION) && isPermissionGranted(ACCESS_FINE_LOCATION)
+    fun hasPreciseLocationPermission() =
+        isPermissionGranted(ACCESS_FINE_LOCATION)
+
+    fun hasApproximateLocationPermission() =
+        isPermissionGranted(ACCESS_COARSE_LOCATION)
 
     @RequiresApi(Build.VERSION_CODES.Q)
     fun hasBackgroundLocationPermission() = isPermissionGranted(ACCESS_BACKGROUND_LOCATION)

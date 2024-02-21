@@ -39,7 +39,8 @@
     <string name="snackbar_invalid_email">Email is not valid.</string>
     <string name="snackbar_empty_field">"Please fill the %1$s"</string>
     <string name="snackbar_successfully_done">Successfully done.</string>
-    <string name="snackbar_basic_location_negative_msg">You cannot use this app without access location.</string>
+    <string name="snackbar_approximate_location_negative_msg">You cannot use this app without access location.</string>
+    <string name="snackbar_precise_location_negative_msg">app cannot access precise location.</string>
     <string name="snackbar_background_location_negative_msg">You cannot use this app without set max level permission.</string>
     <string name="snackbar_notification_negative_msg">You cannot use this app without access post notification.</string>
     <string name="snackbar_short_click_msg">Please long click.</string>
