@@ -25,9 +25,9 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
-import ir.srp.rasad.core.Constants.SERVICE_INTENT_EXTRA_KEY
-import ir.srp.rasad.core.Constants.START_SERVICE_DATA
-import ir.srp.rasad.core.Constants.STOP_SERVICE_DATA
+import ir.srp.rasad.core.Constants.SERVICE_INTENT_DATA
+import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
+import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.utils.MessageViewer.showWarning
 import ir.srp.rasad.core.utils.PermissionManager
 import ir.srp.rasad.databinding.FragmentHomeBinding
@@ -80,7 +80,8 @@ class HomeFragment : BaseFragment() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun initialize() {
         initSettingsButton()
-        initOnOffButton()
+        initTrackMeButton()
+        initTrackOtherButton()
     }
 
     private fun initSettingsButton() {
@@ -92,7 +93,7 @@ class HomeFragment : BaseFragment() {
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun initOnOffButton() {
+    private fun initTrackMeButton() {
         binding.onOffFab.setOnClickListener { onShortClickOnOff() }
         binding.onOffFab.setOnLongClickListener {
             onLongClickOnOff()
@@ -103,7 +104,7 @@ class HomeFragment : BaseFragment() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun onLongClickOnOff() {
         if (!permissionManager.hasPreciseLocationPermission() && !permissionManager.hasApproximateLocationPermission()) {
-            showDialog(
+            showSimpleDialog(
                 msg = getString(R.string.snackbar_basic_location_dialog_msg),
                 negativeAction = { dialog ->
                     showWarning(
@@ -111,28 +112,32 @@ class HomeFragment : BaseFragment() {
                         getString(R.string.snackbar_approximate_location_negative_msg)
                     )
                     dialog.dismiss()
-                }, positiveAction = { _ ->
+                },
+                positiveAction = { _ ->
                     permissionManager.getBasicLocationPermission()
-                })
+                }
+            )
 
             return
         }
 
         if (!permissionManager.hasBackgroundLocationPermission()) {
-            showDialog(
+            showSimpleDialog(
                 msg = getString(R.string.snackbar_background_location_dialog_msg),
                 negativeAction = { dialog ->
                     showWarning(this, getString(R.string.snackbar_background_location_negative_msg))
                     dialog.dismiss()
-                }, positiveAction = { _ ->
+                }
+                , positiveAction = { _ ->
                     permissionManager.getBackgroundLocationPermission()
-                })
+                }
+            )
 
             return
         }
 
         if (!permissionManager.hasNotificationPermission()) {
-            showDialog(
+            showSimpleDialog(
                 msg = getString(R.string.snackbar_notification_dialog_msg),
                 negativeAction = { dialog ->
                     showWarning(this, getString(R.string.snackbar_notification_negative_msg))
@@ -147,16 +152,31 @@ class HomeFragment : BaseFragment() {
         }
 
         if (isServiceStarted)
-            stopService()
+            stopService(STOP_SERVICE_OBSERVABLE)
         else
-            startService()
+            startService(START_SERVICE_OBSERVABLE)
     }
 
     private fun onShortClickOnOff() {
         showWarning(this, getString(R.string.snackbar_short_click_msg))
     }
 
-    private fun showDialog(
+    private fun initTrackOtherButton() {
+        showTrackUserDialog(
+            msg = "",
+
+        )
+    }
+
+    private fun showTrackUserDialog(
+        msg: String,
+        negativeAction: (dialog: DialogInterface) -> Unit,
+        positiveAction: (dialog: DialogInterface) -> Unit,
+    ) {
+
+    }
+
+    private fun showSimpleDialog(
         msg: String,
         negativeAction: (dialog: DialogInterface) -> Unit,
         positiveAction: (dialog: DialogInterface) -> Unit,
@@ -185,9 +205,9 @@ class HomeFragment : BaseFragment() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun startService() {
+    private fun startService(type: String) {
         val intent = Intent(requireContext(), MainService::class.java)
-        intent.putExtra(SERVICE_INTENT_EXTRA_KEY, START_SERVICE_DATA)
+        intent.putExtra(SERVICE_INTENT_DATA, type)
         requireContext().startForegroundService(intent)
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
@@ -195,9 +215,9 @@ class HomeFragment : BaseFragment() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun stopService() {
+    private fun stopService(type: String) {
         val intent = Intent(requireContext(), MainService::class.java)
-        intent.putExtra(SERVICE_INTENT_EXTRA_KEY, STOP_SERVICE_DATA)
+        intent.putExtra(SERVICE_INTENT_DATA, type)
         requireContext().startForegroundService(intent)
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
@@ -226,9 +246,9 @@ class HomeFragment : BaseFragment() {
 
             if (permissionManager.hasBackgroundLocationPermission() && permissionManager.hasNotificationPermission())
                 if (isServiceStarted)
-                    stopService()
+                    stopService(STOP_SERVICE_OBSERVABLE)
                 else
-                    startService()
+                    startService(START_SERVICE_OBSERVABLE)
         }
     }
 

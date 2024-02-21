@@ -13,12 +13,14 @@
     <string name="btn_txt_track_other">Track other</string>
     <string name="btn_txt_positive_dialog">OK</string>
     <string name="btn_txt_negative_dialog">Cancel</string>
+    <string name="btn_send_request">Send Request</string>
 
     <string name="txt_login_toolbar_title">Login</string>
     <string name="txt_settings_toolbar_title">Settings</string>
     <string name="txt_profile_toolbar_title">Profile</string>
     <string name="txt_otp_toolbar_title">Authentication</string>
     <string name="txt_register_toolbar_title">Register</string>
+    <string name="txt_track_user_dialog_msg">Type the username you want to track.</string>
 
     <string name="txt_enter_desc">* Type your mobile number to enter the app.\n  (Pattern: 09123456789)</string>
     <string name="txt_send_otp_desc">* Enter the sent OTP.</string>
@@ -53,4 +55,7 @@
     <string name="tag_edit_profile_bottom_sheet">edit_profile_dialog</string>
     <string name="fab_add_member_content_description">Add member</string>
     <string name="on_off_fab_content_description">On/Off</string>
+
+    <string name="start_observable_notification_msg">App is running in the background.</string>
+    <string name="stop_observable_notification_msg">App is stopped from the background.</string>
 </resources>
