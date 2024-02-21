@@ -1,10 +1,14 @@
 package ir.srp.rasad.core
 
 enum class WebSocketDataType {
-    LogIn,
-    LogOut,
-    Request,
+    LogInObserver,
+    LogInObservable,
+    LogOutObserver,
+    LogOutObservable,
+    RequestPermission,
+    RequestData,
     Grant,
     Deny,
-    Message
+    Data,
+    Failed
 }
