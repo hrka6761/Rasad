@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
@@ -24,14 +23,8 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
 
     private lateinit var binding: FragmentProfileBinding
     private val viewModel: ProfileViewModel by viewModels()
-    private lateinit var dialog: BottomSheetDialogFragment
+    private val editProfileBottomSheet = EditProfileBottomSheet(this)
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        dialog = EditProfileBottomSheet(this)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -113,8 +106,11 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
     private fun onClickUsernameEmail() {
         val args = Bundle()
         args.putString(EDIT_PROFILE_ARG_KEY, USERNAME_ARG_VALUE)
-        dialog.arguments = args
-        dialog.show(requireActivity().supportFragmentManager, dialog.tag)
+        editProfileBottomSheet.arguments = args
+        editProfileBottomSheet.show(
+            requireActivity().supportFragmentManager,
+            editProfileBottomSheet.tag
+        )
     }
 
     private fun initEmailEditButton() {
@@ -124,8 +120,11 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
     private fun onClickEditEmail() {
         val args = Bundle()
         args.putString(EDIT_PROFILE_ARG_KEY, EMAIL_ARG_VALUE)
-        dialog.arguments = args
-        dialog.show(requireActivity().supportFragmentManager, dialog.tag)
+        editProfileBottomSheet.arguments = args
+        editProfileBottomSheet.show(
+            requireActivity().supportFragmentManager,
+            editProfileBottomSheet.tag
+        )
     }
 
     private fun preparingUserDataToUpdateUsername(username: String): UserModel {
@@ -145,7 +144,7 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
                     is Resource.Initial -> {}
                     is Resource.Loading -> {}
                     is Resource.Success -> {
-                        dialog.dismiss()
+                        editProfileBottomSheet.dismiss()
                         response.data?.let {
                             val newUserData = setUsernameAndGetUserModel(it)
                             setUserData(newUserData)
@@ -158,7 +157,7 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
                     }
 
                     is Resource.Error -> {
-                        dialog.dismiss()
+                        editProfileBottomSheet.dismiss()
                         response.error(this@ProfileFragment)
                     }
                 }
@@ -173,7 +172,7 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
                     is Resource.Initial -> {}
                     is Resource.Loading -> {}
                     is Resource.Success -> {
-                        dialog.dismiss()
+                        editProfileBottomSheet.dismiss()
                         response.data?.let {
                             val newUserData = setEmailAndGetUserModel(it)
                             setUserData(newUserData)
@@ -186,7 +185,7 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
                     }
 
                     is Resource.Error -> {
-                        dialog.dismiss()
+                        editProfileBottomSheet.dismiss()
                         response.error(this@ProfileFragment)
                     }
                 }

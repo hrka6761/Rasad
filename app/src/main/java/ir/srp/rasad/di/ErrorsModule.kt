@@ -6,6 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import ir.srp.rasad.core.errors.Error
 import ir.srp.rasad.core.errors.local_errors.LoadLocalDataError
+import ir.srp.rasad.core.errors.local_errors.NotFoundTargetError
 import ir.srp.rasad.core.errors.local_errors.RetrofitError
 import ir.srp.rasad.core.errors.network_errors.E400
 import ir.srp.rasad.core.errors.network_errors.E401
@@ -53,4 +54,9 @@ interface ErrorsModule {
     @Singleton
     @Binds
     fun bindLoadLocalDataError(loadLocalDataError: LoadLocalDataError): Error
+
+    @Named("notFoundTarget")
+    @Singleton
+    @Binds
+    fun bindNotFoundTargetError(notFoundTargetError: NotFoundTargetError): Error
 }

@@ -2,10 +2,8 @@ package ir.srp.rasad.presentation.home
 
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context.BIND_AUTO_CREATE
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Build
@@ -22,19 +20,25 @@ import android.view.ViewGroup
 import androidx.activity.result.ActivityResultCallback
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
 import ir.srp.rasad.core.Constants.SERVICE_INTENT_DATA
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
+import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
+import ir.srp.rasad.core.Resource
+import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
 import ir.srp.rasad.core.utils.MessageViewer.showWarning
 import ir.srp.rasad.core.utils.PermissionManager
 import ir.srp.rasad.databinding.FragmentHomeBinding
+import ir.srp.rasad.domain.models.TargetModel
 import ir.srp.rasad.presentation.services.MainService
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class HomeFragment : BaseFragment() {
+class HomeFragment : BaseFragment(), RequestTargetListener {
 
     private lateinit var binding: FragmentHomeBinding
     private val viewModel: HomeViewModel by viewModels()
@@ -45,6 +49,8 @@ class HomeFragment : BaseFragment() {
     private var isServiceBound = false
     private var isServiceStarted = false
     private val serviceConnection = ServiceConnection()
+    private lateinit var savedTargets: HashSet<TargetModel>
+    val trackUserBottomSheet = TrackUserBottomSheet(this)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,12 +82,57 @@ class HomeFragment : BaseFragment() {
         unBindService()
     }
 
+    override fun onRequest(isNew: Boolean, vararg targets: TargetModel) {
+        if (isNew)
+            for (target in targets)
+                saveNewTarget(target)
+
+        trackUserBottomSheet.dismiss()
+    }
+
+    override fun onRemoveTarget(targetName: String) {
+        removeTarget(targetName)
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun initialize() {
+        initGetTargetsResult()
         initSettingsButton()
         initTrackMeButton()
         initTrackOtherButton()
+    }
+
+    private fun initGetTargetsResult() {
+        lifecycleScope.launch {
+            viewModel.targets.collect { result ->
+                when (result) {
+                    is Resource.Initial -> {}
+                    is Resource.Loading -> {}
+                    is Resource.Success -> {
+                        savedTargets = HashSet()
+                        savedTargets = result.data!!
+
+                        val args = Bundle()
+                        val targets = mutableListOf<TargetModel>()
+
+                        for (target in savedTargets)
+                            targets.add(target)
+
+                        args.putParcelableArray(TARGETS_PREFERENCE_KEY, targets.toTypedArray())
+                        trackUserBottomSheet.arguments = args
+                        trackUserBottomSheet.show(
+                            requireActivity().supportFragmentManager,
+                            trackUserBottomSheet.tag
+                        )
+                    }
+
+                    is Resource.Error -> {
+                        result.error(this@HomeFragment)
+                    }
+                }
+            }
+        }
     }
 
     private fun initSettingsButton() {
@@ -105,7 +156,8 @@ class HomeFragment : BaseFragment() {
     private fun onLongClickOnOff() {
         if (!permissionManager.hasPreciseLocationPermission() && !permissionManager.hasApproximateLocationPermission()) {
             showSimpleDialog(
-                msg = getString(R.string.snackbar_basic_location_dialog_msg),
+                context = requireContext(),
+                msg = getString(R.string.dialog_basic_location_dialog_msg),
                 negativeAction = { dialog ->
                     showWarning(
                         this,
@@ -123,12 +175,12 @@ class HomeFragment : BaseFragment() {
 
         if (!permissionManager.hasBackgroundLocationPermission()) {
             showSimpleDialog(
-                msg = getString(R.string.snackbar_background_location_dialog_msg),
+                context = requireContext(),
+                msg = getString(R.string.dialog_background_location_dialog_msg),
                 negativeAction = { dialog ->
                     showWarning(this, getString(R.string.snackbar_background_location_negative_msg))
                     dialog.dismiss()
-                }
-                , positiveAction = { _ ->
+                }, positiveAction = { _ ->
                     permissionManager.getBackgroundLocationPermission()
                 }
             )
@@ -138,7 +190,8 @@ class HomeFragment : BaseFragment() {
 
         if (!permissionManager.hasNotificationPermission()) {
             showSimpleDialog(
-                msg = getString(R.string.snackbar_notification_dialog_msg),
+                context = requireContext(),
+                msg = getString(R.string.dialog_notification_dialog_msg),
                 negativeAction = { dialog ->
                     showWarning(this, getString(R.string.snackbar_notification_negative_msg))
                     dialog.dismiss()
@@ -162,34 +215,25 @@ class HomeFragment : BaseFragment() {
     }
 
     private fun initTrackOtherButton() {
-        showTrackUserDialog(
-            msg = "",
-
-        )
+        binding.addMemberFab.setOnClickListener { showTrackUserDialog() }
     }
 
-    private fun showTrackUserDialog(
-        msg: String,
-        negativeAction: (dialog: DialogInterface) -> Unit,
-        positiveAction: (dialog: DialogInterface) -> Unit,
-    ) {
+    private fun showTrackUserDialog() {
+        if (this::savedTargets.isInitialized) {
+            val args = Bundle()
+            val targets = mutableListOf<TargetModel>()
 
-    }
+            for (target in savedTargets)
+                targets.add(target)
 
-    private fun showSimpleDialog(
-        msg: String,
-        negativeAction: (dialog: DialogInterface) -> Unit,
-        positiveAction: (dialog: DialogInterface) -> Unit,
-    ) {
-        AlertDialog.Builder(requireContext()).setMessage(msg)
-            .setPositiveButton(getString(R.string.btn_txt_positive_dialog)) { dialog, _ ->
-                positiveAction(dialog)
-            }
-            .setNegativeButton(getString(R.string.btn_txt_negative_dialog)) { dialog, _ ->
-                negativeAction(dialog)
-            }
-            .setCancelable(false)
-            .show()
+            args.putParcelableArray(TARGETS_PREFERENCE_KEY, targets.toTypedArray())
+            trackUserBottomSheet.arguments = args
+            trackUserBottomSheet.show(
+                requireActivity().supportFragmentManager,
+                trackUserBottomSheet.tag
+            )
+        } else
+            viewModel.loadTargets()
     }
 
     private fun bindService() {
@@ -222,6 +266,23 @@ class HomeFragment : BaseFragment() {
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
         isServiceStarted = false
+    }
+
+    private fun saveNewTarget(target: TargetModel) {
+        if (!this::savedTargets.isInitialized)
+            savedTargets = HashSet()
+        savedTargets.add(target)
+        viewModel.saveTargets(savedTargets)
+    }
+
+    private fun removeTarget(targetName: String) {
+        for (target in savedTargets) {
+            if (target.name == targetName) {
+                savedTargets.remove(target)
+                break
+            }
+        }
+        viewModel.saveTargets(savedTargets)
     }
 
 

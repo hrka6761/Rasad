@@ -7,5 +7,5 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class TargetPermissionsModel(
     val type: TargetPermissionType,
-    val coordinate: String
+    val coordinate: Int
 ) : Parcelable

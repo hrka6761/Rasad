@@ -20,4 +20,11 @@ object Constants {
     const val STOP_SERVICE_OBSERVER = "stopService_observer"
     const val CLOSE_WEBSOCKET_STATUS_CODE = 1000
     const val CLOSE_WEBSOCKET_STATUS_REASON = "disconnect"
+    const val TARGETS_PREFERENCE_KEY = "targets"
+    const val LOCATION_PERMISSION_TYPE_CHANGES = 0
+    const val LOCATION_PERMISSION_TYPE_EVERY_5_M = 5
+    const val LOCATION_PERMISSION_TYPE_EVERY_30_M = 30
+    const val LOCATION_PERMISSION_TYPE_EVERY_1_H = 60
+    const val LOCATION_PERMISSION_TYPE_EVERY_3_H = 180
+    const val LOCATION_PERMISSION_TYPE_EVERY_1_D = 1320
 }

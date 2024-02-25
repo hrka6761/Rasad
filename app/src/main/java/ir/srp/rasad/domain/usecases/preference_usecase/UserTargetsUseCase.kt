@@ -7,9 +7,9 @@ import javax.inject.Inject
 
 class UserTargetsUseCase @Inject constructor(private val localUserDataRepo: LocalUserDataRepo) {
 
-    suspend fun saveUserTargets(targets: Set<TargetModel>) =
+    suspend fun saveUserTargets(targets: HashSet<TargetModel>) =
         localUserDataRepo.saveUserTargets(targets)
 
-    suspend fun loadUserTargets(): Resource<Set<TargetModel>?> =
+    suspend fun loadUserTargets(): Resource<HashSet<TargetModel>?> =
         localUserDataRepo.loadUserTargets()
 }
