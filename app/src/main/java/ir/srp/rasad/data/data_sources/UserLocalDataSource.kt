@@ -25,6 +25,11 @@ class UserLocalDataSource @Inject constructor(
         editor.apply()
     }
 
+    suspend fun saveSet(preferenceKey: String, value: Set<String>) {
+        editor.putStringSet(preferenceKey, value)
+        editor.apply()
+    }
+
     suspend fun loadBoolean(preferenceKey: String, defaultValue: Boolean): Boolean =
         sharedPreferences.getBoolean(preferenceKey, defaultValue)
 
@@ -33,6 +38,9 @@ class UserLocalDataSource @Inject constructor(
 
     suspend fun loadString(preferenceKey: String, defaultValue: String?): String? =
         sharedPreferences.getString(preferenceKey, defaultValue)
+
+    suspend fun loadSet(preferenceKey: String, defaultValue: Set<String>?): Set<String>? =
+        sharedPreferences.getStringSet(preferenceKey, defaultValue)
 
     suspend fun clearAllSharedPreferences() {
         editor.clear()
