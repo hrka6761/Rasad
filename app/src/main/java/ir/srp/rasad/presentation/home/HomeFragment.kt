@@ -24,12 +24,21 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
+import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
+import ir.srp.rasad.core.Constants.OBSERVABLE_CLOSED_CONNECTION
+import ir.srp.rasad.core.Constants.OBSERVABLE_CLOSING_CONNECTION
+import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_SEND_MESSAGE_FAIL
 import ir.srp.rasad.core.Constants.SERVICE_INTENT_DATA
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
 import ir.srp.rasad.core.Resource
+import ir.srp.rasad.core.WebSocketDataType
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
+import ir.srp.rasad.core.utils.MessageViewer
+import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.utils.MessageViewer.showWarning
 import ir.srp.rasad.core.utils.PermissionManager
 import ir.srp.rasad.databinding.FragmentHomeBinding
@@ -45,7 +54,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private lateinit var permissionManager: PermissionManager
     private var homeMessenger: Messenger? = null
     private lateinit var serviceMessenger: Messenger
-    private val handler = Handler()
     private var isServiceBound = false
     private var isServiceStarted = false
     private val serviceConnection = ServiceConnection()
@@ -57,7 +65,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         super.onCreate(savedInstanceState)
 
         permissionManager = PermissionManager(this, PermissionsRequestCallback())
-        serviceMessenger = Messenger(handler)
+        serviceMessenger = Messenger(Handler())
         bindService()
     }
 
@@ -253,9 +261,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         val intent = Intent(requireContext(), MainService::class.java)
         intent.putExtra(SERVICE_INTENT_DATA, type)
         requireContext().startForegroundService(intent)
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
-        isServiceStarted = true
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -263,9 +268,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         val intent = Intent(requireContext(), MainService::class.java)
         intent.putExtra(SERVICE_INTENT_DATA, type)
         requireContext().startForegroundService(intent)
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
-        isServiceStarted = false
     }
 
     private fun saveNewTarget(target: TargetModel) {
@@ -283,6 +285,41 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             }
         }
         viewModel.saveTargets(savedTargets)
+    }
+
+    private fun observableConnectionFailAction() {
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+        isServiceStarted = false
+        showError(this, "Failed to connect to the server !!!")
+    }
+
+    private fun observableConnectionSuccessAction() {
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
+        isServiceStarted = true
+    }
+
+    private fun observableSendMessageFailAction(type: String) {
+        when(type) {
+            WebSocketDataType.LogInObservable.name -> {
+                binding.onOffFab.backgroundTintList =
+                    ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+                isServiceStarted = false
+            }
+        }
+        showError(this, "Failed to login to the server !!!")
+    }
+
+    private fun observableClosingConnectionAction() {
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.orange))
+    }
+
+    private fun observableClosedConnectionAction() {
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+        isServiceStarted = false
     }
 
 
@@ -316,6 +353,9 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private inner class ServiceConnection : android.content.ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             homeMessenger = Messenger(service)
+            val msg = Message.obtain(null, MESSENGER_TRANSFORMATION)
+            msg.replyTo = serviceMessenger
+            homeMessenger?.send(msg)
             isServiceBound = true
         }
 
@@ -328,7 +368,12 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     @SuppressLint("HandlerLeak")
     private inner class Handler : android.os.Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
-            when (msg) {
+            when (msg.what) {
+                OBSERVABLE_CONNECTION_SUCCESS -> { observableConnectionSuccessAction() }
+                OBSERVABLE_CONNECTION_FAIL -> { observableConnectionFailAction() }
+                OBSERVABLE_SEND_MESSAGE_FAIL -> { observableSendMessageFailAction(msg.obj as String) }
+                OBSERVABLE_CLOSING_CONNECTION -> { observableClosingConnectionAction() }
+                OBSERVABLE_CLOSED_CONNECTION -> { observableClosedConnectionAction() }
                 else -> super.handleMessage(msg)
             }
         }

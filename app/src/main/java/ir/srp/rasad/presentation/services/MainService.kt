@@ -16,6 +16,12 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
+import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
+import ir.srp.rasad.core.Constants.OBSERVABLE_CLOSED_CONNECTION
+import ir.srp.rasad.core.Constants.OBSERVABLE_CLOSING_CONNECTION
+import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_SEND_MESSAGE_FAIL
 import ir.srp.rasad.core.Constants.SERVICE_INTENT_DATA
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
@@ -37,7 +43,7 @@ class MainService : Service() {
     private val CHANNEL_ID = "Rasad"
     private val NOTIFICATION_ID = 110
     private lateinit var notificationChannel: NotificationChannel
-    private val serviceMessenger: Messenger? = null
+    private var serviceMessenger: Messenger? = null
     private lateinit var homeMessenger: Messenger
     @Inject lateinit var notificationManager: NotificationManager
     @Named("IO") @Inject lateinit var io: CoroutineDispatcher
@@ -74,10 +80,6 @@ class MainService : Service() {
 
     override fun onBind(intent: Intent?): IBinder = homeMessenger.binder
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
 
     private fun handleStartIntentData(data: String) {
         when (data) {
@@ -94,19 +96,8 @@ class MainService : Service() {
                 connectObservable()
             }
 
-            STOP_SERVICE_OBSERVABLE -> {
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                notificationManager.notify(
-                    NOTIFICATION_ID,
-                    createNotification(
-                        getString(R.string.app_name),
-                        getString(R.string.stop_observable_notification_msg),
-                        false
-                    )
-                )
+            STOP_SERVICE_OBSERVABLE -> { disconnectObservable() }
 
-                disconnectObservable()
-            }
             else -> {}
         }
     }
@@ -115,10 +106,24 @@ class MainService : Service() {
         CoroutineScope(io).launch {
             webSocketConnectionUseCase.createChannel(
                 url = WEBSOCKET_URL,
-                successCallback = { loginObservable() },
-                failCallback = null
+                successCallback = { observableConnectionSuccessAction() },
+                failCallback = { _, _ -> observableConnectionFailAction() }
             )
         }
+    }
+
+    private fun disconnectObservable() {
+        CoroutineScope(io).launch {
+            webSocketConnectionUseCase.removeChannel(
+                onClosingConnection = { _, _ -> observableClosingConnectionAction() },
+                onClosedConnection = { _, _ -> observableClosedConnectionAction() }
+            )
+        }
+    }
+
+    private fun observableConnectionSuccessAction() {
+        loginObservable()
+        sendSimpleMessageToHomeFragment(OBSERVABLE_CONNECTION_SUCCESS)
     }
 
     private fun loginObservable() {
@@ -130,19 +135,56 @@ class MainService : Service() {
                     targets = null,
                     data = "$userId,$userToken"
                 ),
-                onSendMessageFail = { t, response ->
-
-                })
+                onSendMessageFail = { _, _ ->
+                    observableSendMessageFailAction(WebSocketDataType.LogInObservable)
+                }
+            )
         }
     }
 
-    private fun disconnectObservable() {
-        CoroutineScope(io).launch {
-            webSocketConnectionUseCase.removeChannel(
-                onClosingConnection = null,
-                onClosedConnection = null
+    private fun observableConnectionFailAction() {
+        sendSimpleMessageToHomeFragment(OBSERVABLE_CONNECTION_FAIL)
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        notificationManager.notify(
+            NOTIFICATION_ID,
+            createNotification(
+                getString(R.string.app_name),
+                getString(R.string.stop_observable_notification_msg),
+                false
             )
+        )
+    }
+
+    private fun observableSendMessageFailAction(type: WebSocketDataType) {
+        when (type) {
+            WebSocketDataType.LogInObservable -> {
+                sendSimpleMessageToHomeFragment(OBSERVABLE_SEND_MESSAGE_FAIL, obj = type.name)
+                disconnectObservable()
+            }
+            else -> Unit
         }
+    }
+
+    private fun observableClosingConnectionAction() {
+        sendSimpleMessageToHomeFragment(OBSERVABLE_CLOSING_CONNECTION)
+    }
+
+    private fun observableClosedConnectionAction() {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        notificationManager.notify(
+            NOTIFICATION_ID,
+            createNotification(
+                getString(R.string.app_name),
+                getString(R.string.stop_observable_notification_msg),
+                false
+            )
+        )
+        sendSimpleMessageToHomeFragment(OBSERVABLE_CLOSED_CONNECTION)
+    }
+
+    private fun sendSimpleMessageToHomeFragment(msg: Int, obj: Any? = null) {
+        val message = Message.obtain(null, msg, obj)
+        serviceMessenger?.send(message)
     }
 
     private fun createNotification(title: String, message: String, onGoing: Boolean): Notification {
@@ -165,7 +207,8 @@ class MainService : Service() {
     @SuppressLint("HandlerLeak")
     private inner class Handler : android.os.Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
-            when (msg) {
+            when (msg.what) {
+                MESSENGER_TRANSFORMATION -> { serviceMessenger = msg.replyTo }
                 else -> super.handleMessage(msg)
             }
         }
