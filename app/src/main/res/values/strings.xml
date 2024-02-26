@@ -36,6 +36,7 @@
     <string name="txt_username_title">Username</string>
     <string name="txt_mobile_title">Mobile</string>
     <string name="txt_edit_profile_bottom_sheet_desc">Please insert your new %1$s</string>
+    <string name="txt_waiting">Please wait …</string>
 
     <string name="snackbar_incorrect_mobile_number">The mobile number is not correct.</string>
     <string name="snackbar_incorrect_otp">The code is not correct.</string>

@@ -216,6 +216,22 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             stopService(STOP_SERVICE_OBSERVABLE)
         else
             startService(START_SERVICE_OBSERVABLE)
+
+        disableViews()
+    }
+
+    private fun disableViews() {
+        binding.progressBar.visibility = View.VISIBLE
+        binding.onOffFab.isEnabled = false
+        binding.addMemberFab.isEnabled = false
+        binding.settingsImg.isEnabled = false
+    }
+
+    private fun enableViews() {
+        binding.progressBar.visibility = View.GONE
+        binding.onOffFab.isEnabled = true
+        binding.addMemberFab.isEnabled = true
+        binding.settingsImg.isEnabled = true
     }
 
     private fun onShortClickOnOff() {
@@ -288,6 +304,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun observableConnectionFailAction() {
+        enableViews()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
         isServiceStarted = false
@@ -295,12 +312,14 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun observableConnectionSuccessAction() {
+        enableViews()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
         isServiceStarted = true
     }
 
     private fun observableSendMessageFailAction(type: String) {
+        enableViews()
         when(type) {
             WebSocketDataType.LogInObservable.name -> {
                 binding.onOffFab.backgroundTintList =
@@ -317,6 +336,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun observableClosedConnectionAction() {
+        enableViews()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
         isServiceStarted = false
