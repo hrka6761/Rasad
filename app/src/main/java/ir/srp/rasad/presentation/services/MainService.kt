@@ -7,6 +7,8 @@ import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_HIGH
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+import android.os.Build.VERSION_CODES.Q
 import android.os.Build.VERSION.*
 import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.TIRAMISU
@@ -17,6 +19,7 @@ import android.os.Message
 import android.os.Messenger
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
@@ -80,6 +83,7 @@ class MainService : Service() {
         homeMessenger = Messenger(Handler())
     }
 
+    @RequiresApi(Q)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val bundle = intent?.getBundleExtra(SERVICE_BUNDLE)
         bundle?.let { handleStartIntentData(it) }
@@ -90,16 +94,19 @@ class MainService : Service() {
     override fun onBind(intent: Intent?): IBinder = homeMessenger.binder
 
 
+    @RequiresApi(Q)
     private fun handleStartIntentData(bundle: Bundle) {
         when (bundle.getString(SERVICE_TYPE)) {
             START_SERVICE_OBSERVABLE -> {
-                startForeground(
+                ServiceCompat.startForeground(
+                    this,
                     NOTIFICATION_ID,
                     createNotification(
                         getString(R.string.app_name),
                         getString(R.string.start_observable_notification_msg),
                         true
-                    )
+                    ),
+                    FOREGROUND_SERVICE_TYPE_LOCATION
                 )
 
                 connectObservable()
@@ -164,7 +171,7 @@ class MainService : Service() {
 
     private fun observableConnectionFailAction() {
         sendSimpleMessageToHomeFragment(OBSERVABLE_CONNECTION_FAIL)
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         notificationManager.notify(
             NOTIFICATION_ID,
             createNotification(
@@ -190,7 +197,7 @@ class MainService : Service() {
     }
 
     private fun observableClosedConnectionAction() {
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         notificationManager.notify(
             NOTIFICATION_ID,
             createNotification(
