@@ -7,11 +7,13 @@ import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Build
+import android.os.Build.VERSION_CODES.O
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
+import android.os.Parcelable
 import ir.srp.rasad.core.Constants.COARSE_RESULT_KEY
 import ir.srp.rasad.core.Constants.FINE_RESULT_KEY
 import android.view.LayoutInflater
@@ -30,14 +32,16 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_CLOSING_CONNECTION
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_SEND_MESSAGE_FAIL
-import ir.srp.rasad.core.Constants.SERVICE_INTENT_DATA
+import ir.srp.rasad.core.Constants.SERVICE_BUNDLE
+import ir.srp.rasad.core.Constants.SERVICE_DATA
+import ir.srp.rasad.core.Constants.SERVICE_TYPE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
+import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.WebSocketDataType
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
-import ir.srp.rasad.core.utils.MessageViewer
 import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.utils.MessageViewer.showWarning
 import ir.srp.rasad.core.utils.PermissionManager
@@ -46,6 +50,7 @@ import ir.srp.rasad.domain.models.TargetModel
 import ir.srp.rasad.presentation.services.MainService
 import kotlinx.coroutines.launch
 
+@Suppress("UNCHECKED_CAST")
 @AndroidEntryPoint
 class HomeFragment : BaseFragment(), RequestTargetListener {
 
@@ -87,14 +92,17 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     override fun onStop() {
         super.onStop()
-        unBindService()
+        if (isServiceBound)
+            unBindService()
     }
 
+    @RequiresApi(O)
     override fun onRequest(isNew: Boolean, vararg targets: TargetModel) {
         if (isNew)
             for (target in targets)
                 saveNewTarget(target)
 
+        startService(START_SERVICE_OBSERVER, targets)
         trackUserBottomSheet.dismiss()
     }
 
@@ -272,17 +280,23 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         isServiceBound = false
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun startService(type: String) {
+    @RequiresApi(O)
+    private fun startService(type: String, data: Any? = null) {
         val intent = Intent(requireContext(), MainService::class.java)
-        intent.putExtra(SERVICE_INTENT_DATA, type)
+        val bundle = Bundle()
+        bundle.putString(SERVICE_TYPE, type)
+        data?.let { bundle.putParcelableArray(SERVICE_DATA, data as Array<Parcelable>) }
+        intent.putExtra(SERVICE_BUNDLE, bundle)
         requireContext().startForegroundService(intent)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun stopService(type: String) {
+    @RequiresApi(O)
+    private fun stopService(type: String, data: Any? = null) {
         val intent = Intent(requireContext(), MainService::class.java)
-        intent.putExtra(SERVICE_INTENT_DATA, type)
+        val bundle = Bundle()
+        bundle.putString(SERVICE_TYPE, type)
+        data?.let { bundle.putParcelableArray(SERVICE_DATA, data as Array<Parcelable>) }
+        intent.putExtra(SERVICE_BUNDLE, bundle)
         requireContext().startForegroundService(intent)
     }
 

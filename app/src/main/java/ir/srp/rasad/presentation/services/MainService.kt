@@ -7,7 +7,10 @@ import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_HIGH
 import android.app.Service
 import android.content.Intent
-import android.os.Build
+import android.os.Build.VERSION.*
+import android.os.Build.VERSION_CODES.O
+import android.os.Build.VERSION_CODES.TIRAMISU
+import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
 import android.os.Message
@@ -22,11 +25,16 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_CLOSING_CONNECTION
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_SEND_MESSAGE_FAIL
-import ir.srp.rasad.core.Constants.SERVICE_INTENT_DATA
+import ir.srp.rasad.core.Constants.SERVICE_DATA
+import ir.srp.rasad.core.Constants.SERVICE_BUNDLE
+import ir.srp.rasad.core.Constants.SERVICE_TYPE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
+import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
+import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVER
 import ir.srp.rasad.core.Constants.WEBSOCKET_URL
 import ir.srp.rasad.core.WebSocketDataType
+import ir.srp.rasad.domain.models.TargetModel
 import ir.srp.rasad.domain.models.WebsocketDataModel
 import ir.srp.rasad.domain.usecases.preference_usecase.UserInfoUseCase
 import ir.srp.rasad.domain.usecases.websocket_usecase.TransferWebsocketDataUseCase
@@ -37,6 +45,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Named
 
+@Suppress("DEPRECATION")
 @AndroidEntryPoint
 class MainService : Service() {
 
@@ -55,7 +64,7 @@ class MainService : Service() {
     private lateinit var userId: String
 
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(O)
     override fun onCreate() {
         super.onCreate()
 
@@ -72,8 +81,8 @@ class MainService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val data = intent?.getStringExtra(SERVICE_INTENT_DATA)
-        data?.let { handleStartIntentData(it) }
+        val bundle = intent?.getBundleExtra(SERVICE_BUNDLE)
+        bundle?.let { handleStartIntentData(it) }
 
         return START_STICKY
     }
@@ -81,8 +90,8 @@ class MainService : Service() {
     override fun onBind(intent: Intent?): IBinder = homeMessenger.binder
 
 
-    private fun handleStartIntentData(data: String) {
-        when (data) {
+    private fun handleStartIntentData(bundle: Bundle) {
+        when (bundle.getString(SERVICE_TYPE)) {
             START_SERVICE_OBSERVABLE -> {
                 startForeground(
                     NOTIFICATION_ID,
@@ -96,9 +105,20 @@ class MainService : Service() {
                 connectObservable()
             }
 
-            STOP_SERVICE_OBSERVABLE -> { disconnectObservable() }
+            STOP_SERVICE_OBSERVABLE -> {
+                disconnectObservable()
+            }
 
-            else -> {}
+            START_SERVICE_OBSERVER -> {
+                val data = if (SDK_INT >= TIRAMISU)
+                    bundle.getParcelableArray(SERVICE_DATA, TargetModel::class.java)
+                else
+                    bundle.getParcelableArray(SERVICE_DATA)
+            }
+
+            STOP_SERVICE_OBSERVER -> {}
+
+            else -> Unit
         }
     }
 
@@ -197,7 +217,7 @@ class MainService : Service() {
             .build()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(O)
     private fun createNotificationChannel() {
         notificationChannel = NotificationChannel(CHANNEL_ID, CHANNEL_ID, IMPORTANCE_HIGH)
         notificationManager.createNotificationChannel(notificationChannel)

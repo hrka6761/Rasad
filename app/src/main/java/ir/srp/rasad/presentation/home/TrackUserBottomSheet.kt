@@ -1,7 +1,8 @@
 package ir.srp.rasad.presentation.home
 
 import android.annotation.SuppressLint
-import android.os.Build
+import android.os.Build.VERSION.SDK_INT
+import android.os.Build.VERSION_CODES.TIRAMISU
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -39,11 +40,11 @@ class TrackUserBottomSheet(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val args = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val args = if (SDK_INT >= TIRAMISU)
             requireArguments().getParcelableArray(TARGETS_PREFERENCE_KEY, TargetModel::class.java)
-        } else {
+        else
             requireArguments().getParcelableArray(TARGETS_PREFERENCE_KEY)
-        }
+
         savedTargets = args as Array<TargetModel>
         savedTargetsSize = savedTargets.size
         selectedChips = mutableListOf()
