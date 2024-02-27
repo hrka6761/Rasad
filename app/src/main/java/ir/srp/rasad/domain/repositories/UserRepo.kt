@@ -35,4 +35,6 @@ interface UserRepo {
         onReceiveTextMessage: ((text: String) -> Unit)?,
         onReceiveBinaryMessage: ((bytes: ByteString) -> Unit)?,
     )
+
+    fun isChannelExist(): Boolean
 }

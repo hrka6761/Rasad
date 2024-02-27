@@ -16,4 +16,6 @@ class WebSocketConnectionUseCase @Inject constructor(private val userRepo: UserR
         onClosingConnection: ((code: Int, reason: String) -> Unit)?,
         onClosedConnection: ((code: Int, reason: String) -> Unit)?,
     ) = userRepo.removeChannel(onClosingConnection, onClosedConnection)
+
+    fun isChannelExist() = userRepo.isChannelExist()
 }

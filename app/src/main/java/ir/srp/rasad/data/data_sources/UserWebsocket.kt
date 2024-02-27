@@ -64,6 +64,8 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
         listener.onReceiveBinaryMessage = onReceiveBinaryMessage
     }
 
+    fun isConnected() = isConnected
+
 
     private inner class ChannelListener : WebSocketListener() {
 

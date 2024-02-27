@@ -127,4 +127,6 @@ class UserRepoImpl @Inject constructor(
     ) {
         userWebsocket.receiveData(onReceiveTextMessage, onReceiveBinaryMessage)
     }
+
+    override fun isChannelExist(): Boolean = userWebsocket.isConnected()
 }
