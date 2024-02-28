@@ -26,21 +26,35 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
+import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
+import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
-import ir.srp.rasad.core.Constants.OBSERVABLE_CLOSED_CONNECTION
-import ir.srp.rasad.core.Constants.OBSERVABLE_CLOSING_CONNECTION
-import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_FAIL
-import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTION_SUCCESS
-import ir.srp.rasad.core.Constants.OBSERVABLE_SEND_MESSAGE_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTING
+import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_STATE
+import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
+import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
+import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
+import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_STATE
+import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVER_SENDING_REQUEST_DATA
+import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_FAIL
+import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_SUCCESS
 import ir.srp.rasad.core.Constants.SERVICE_BUNDLE
 import ir.srp.rasad.core.Constants.SERVICE_DATA
+import ir.srp.rasad.core.Constants.SERVICE_STATE
 import ir.srp.rasad.core.Constants.SERVICE_TYPE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
 import ir.srp.rasad.core.Resource
-import ir.srp.rasad.core.WebSocketDataType
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
 import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.utils.MessageViewer.showWarning
@@ -54,6 +68,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class HomeFragment : BaseFragment(), RequestTargetListener {
 
+    private val TAG = "hamidreza"
     private lateinit var binding: FragmentHomeBinding
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var permissionManager: PermissionManager
@@ -61,6 +76,8 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private lateinit var serviceMessenger: Messenger
     private var isServiceBound = false
     private var isServiceStarted = false
+    private var isObservableLogIn = false
+    private var isObserverLogIn = false
     private val serviceConnection = ServiceConnection()
     private lateinit var savedTargets: HashSet<TargetModel>
     val trackUserBottomSheet = TrackUserBottomSheet(this)
@@ -71,7 +88,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
         permissionManager = PermissionManager(this, PermissionsRequestCallback())
         serviceMessenger = Messenger(Handler())
-        bindService()
     }
 
     override fun onCreateView(
@@ -80,6 +96,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     ): View {
         binding = FragmentHomeBinding.inflate(inflater, container, false)
 
+        bindService()
         return binding.root
     }
 
@@ -92,17 +109,18 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     override fun onStop() {
         super.onStop()
-        if (isServiceBound)
-            unBindService()
+
+        unBindService()
     }
 
     @RequiresApi(O)
-    override fun onRequest(isNew: Boolean, vararg targets: TargetModel) {
-        if (isNew)
+    override fun onRequest(isNewTarget: Boolean, vararg targets: TargetModel) {
+        if (isNewTarget)
             for (target in targets)
                 saveNewTarget(target)
 
         startService(START_SERVICE_OBSERVER, targets)
+        disableViews()
         trackUserBottomSheet.dismiss()
     }
 
@@ -220,8 +238,8 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             return
         }
 
-        if (isServiceStarted)
-            stopService(STOP_SERVICE_OBSERVABLE)
+        if (isObservableLogIn)
+            startService(STOP_SERVICE_OBSERVABLE)
         else
             startService(START_SERVICE_OBSERVABLE)
 
@@ -247,10 +265,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun initTrackOtherButton() {
-        binding.addMemberFab.setOnClickListener { showTrackUserDialog() }
+        binding.addMemberFab.setOnClickListener { showTrackUserSheet() }
     }
 
-    private fun showTrackUserDialog() {
+    private fun showTrackUserSheet() {
         if (this::savedTargets.isInitialized) {
             val args = Bundle()
             val targets = mutableListOf<TargetModel>()
@@ -276,22 +294,14 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun unBindService() {
-        requireContext().unbindService(serviceConnection)
-        isServiceBound = false
+        if (isServiceBound) {
+            requireContext().unbindService(serviceConnection)
+            isServiceBound = false
+        }
     }
 
     @RequiresApi(O)
     private fun startService(type: String, data: Any? = null) {
-        val intent = Intent(requireContext(), MainService::class.java)
-        val bundle = Bundle()
-        bundle.putString(SERVICE_TYPE, type)
-        data?.let { bundle.putParcelableArray(SERVICE_DATA, data as Array<Parcelable>) }
-        intent.putExtra(SERVICE_BUNDLE, bundle)
-        requireContext().startForegroundService(intent)
-    }
-
-    @RequiresApi(O)
-    private fun stopService(type: String, data: Any? = null) {
         val intent = Intent(requireContext(), MainService::class.java)
         val bundle = Bundle()
         bundle.putString(SERVICE_TYPE, type)
@@ -317,43 +327,129 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         viewModel.saveTargets(savedTargets)
     }
 
+    private fun onClickCancelWaiting() {
+        binding.cancelWaitingBtn.visibility = View.GONE
+        enableViews()
+        val msg = Message.obtain(null, CANCEL_OBSERVE)
+        homeMessenger?.send(msg)
+        isServiceStarted = false
+        isObserverLogIn = false
+    }
+
+
+    private fun observableConnectionSuccessAction() {
+
+    }
+
+    private fun observableConnectingAction() {
+        isServiceStarted = true
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.orange))
+    }
+
     private fun observableConnectionFailAction() {
         enableViews()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
         isServiceStarted = false
-        showError(this, "Failed to connect to the server !!!")
+        showError(this, getString(R.string.observable_connect_fail_msg))
     }
 
-    private fun observableConnectionSuccessAction() {
+    private fun observableLogInSuccessAction() {
         enableViews()
+        isObservableLogIn = true
+        disableObserver()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
-        isServiceStarted = true
     }
 
-    private fun observableSendMessageFailAction(type: String) {
-        enableViews()
-        when(type) {
-            WebSocketDataType.LogInObservable.name -> {
-                binding.onOffFab.backgroundTintList =
-                    ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
-                isServiceStarted = false
-            }
-        }
-        showError(this, "Failed to login to the server !!!")
-    }
-
-    private fun observableClosingConnectionAction() {
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.orange))
-    }
-
-    private fun observableClosedConnectionAction() {
+    private fun observableLogInFailAction() {
         enableViews()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
         isServiceStarted = false
+        showError(this, getString(R.string.observable_login_fail_msg))
+    }
+
+    private fun observableLogOutSuccessAction() {
+        enableViews()
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+        isServiceStarted = false
+        isObservableLogIn = false
+    }
+
+    private fun observableLogOutFailAction() {
+        enableViews()
+        enableObserver()
+        showError(this, getString(R.string.observable_logout_fail_msg))
+    }
+
+
+    private fun observerConnectingAction() {
+        isServiceStarted = true
+    }
+
+    private fun observerConnectSuccessAction() {
+
+    }
+
+    private fun observerConnectFailAction() {
+        enableViews()
+        isServiceStarted = false
+        showError(this, getString(R.string.observer_connect_fail_msg))
+    }
+
+    private fun observerLoginSuccessAction() {
+        isObserverLogIn = true
+    }
+
+    private fun observerLoginFailAction() {
+        enableViews()
+        isServiceStarted = false
+        showError(this, getString(R.string.observer_login_fail_msg))
+    }
+
+    private fun observerSendingRequestDataAction() {
+
+    }
+
+    private fun observerSendRequestDataSuccessAction() {
+        binding.waitingTxt.text = getString(R.string.txt_response_waiting)
+        binding.cancelWaitingBtn.setOnClickListener { onClickCancelWaiting() }
+        binding.cancelWaitingBtn.visibility = View.VISIBLE
+    }
+
+    private fun observerSendRequestDataFailAction() {
+        enableViews()
+        showError(this, getString(R.string.observer_send_request_data_fail_msg))
+        isServiceStarted = false
+        isObserverLogIn = false
+    }
+
+
+    private fun disconnectObservableAction() {
+        isServiceStarted = false
+        isObservableLogIn = false
+        enableViews()
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+    }
+
+    private fun enableObservable() {
+        binding.onOffFab.isEnabled = true
+    }
+
+    private fun disableObservable() {
+        binding.onOffFab.isEnabled = false
+    }
+
+    private fun enableObserver() {
+        binding.addMemberFab.isEnabled = true
+    }
+
+    private fun disableObserver() {
+        binding.addMemberFab.isEnabled = false
     }
 
 
@@ -378,7 +474,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
             if (permissionManager.hasBackgroundLocationPermission() && permissionManager.hasNotificationPermission())
                 if (isServiceStarted)
-                    stopService(STOP_SERVICE_OBSERVABLE)
+                    startService(STOP_SERVICE_OBSERVABLE)
                 else
                     startService(START_SERVICE_OBSERVABLE)
         }
@@ -403,11 +499,91 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private inner class Handler : android.os.Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
-                OBSERVABLE_CONNECTION_SUCCESS -> { observableConnectionSuccessAction() }
-                OBSERVABLE_CONNECTION_FAIL -> { observableConnectionFailAction() }
-                OBSERVABLE_SEND_MESSAGE_FAIL -> { observableSendMessageFailAction(msg.obj as String) }
-                OBSERVABLE_CLOSING_CONNECTION -> { observableClosingConnectionAction() }
-                OBSERVABLE_CLOSED_CONNECTION -> { observableClosedConnectionAction() }
+                OBSERVABLE_LOGIN_STATE -> {
+                    isObservableLogIn = msg.obj as Boolean
+                    if (isObservableLogIn) {
+                        binding.onOffFab.backgroundTintList =
+                            ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
+                        disableObserver()
+                    } else
+                        binding.onOffFab.backgroundTintList =
+                            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+                }
+
+                OBSERVER_LOGIN_STATE -> {
+                    isObserverLogIn = msg.obj as Boolean
+                    if (isObserverLogIn)
+                        disableObservable()
+                }
+
+                SERVICE_STATE -> {
+                    isServiceStarted = msg.obj as Boolean
+                }
+
+                DISCONNECT -> {
+                    disconnectObservableAction()
+                }
+
+                OBSERVABLE_CONNECTING -> {
+                    observableConnectingAction()
+                }
+
+                OBSERVABLE_CONNECT_SUCCESS -> {
+                    observableConnectionSuccessAction()
+                }
+
+                OBSERVABLE_CONNECT_FAIL -> {
+                    observableConnectionFailAction()
+                }
+
+                OBSERVABLE_LOGIN_SUCCESS -> {
+                    observableLogInSuccessAction()
+                }
+
+                OBSERVABLE_LOGIN_FAIL -> {
+                    observableLogInFailAction()
+                }
+
+                OBSERVABLE_LOGOUT_SUCCESS -> {
+                    observableLogOutSuccessAction()
+                }
+
+                OBSERVABLE_LOGOUT_FAIL -> {
+                    observableLogOutFailAction()
+                }
+
+                OBSERVER_CONNECTING -> {
+                    observerConnectingAction()
+                }
+
+                OBSERVER_CONNECT_SUCCESS -> {
+                    observerConnectSuccessAction()
+                }
+
+                OBSERVER_CONNECT_FAIL -> {
+                    observerConnectFailAction()
+                }
+
+                OBSERVER_LOGIN_SUCCESS -> {
+                    observerLoginSuccessAction()
+                }
+
+                OBSERVER_LOGIN_FAIL -> {
+                    observerLoginFailAction()
+                }
+
+                OBSERVER_SENDING_REQUEST_DATA -> {
+                    observerSendingRequestDataAction()
+                }
+
+                OBSERVER_SEND_REQUEST_DATA_SUCCESS -> {
+                    observerSendRequestDataSuccessAction()
+                }
+
+                OBSERVER_SEND_REQUEST_DATA_FAIL -> {
+                    observerSendRequestDataFailAction()
+                }
+
                 else -> super.handleMessage(msg)
             }
         }

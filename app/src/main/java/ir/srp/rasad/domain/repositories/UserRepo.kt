@@ -19,6 +19,8 @@ interface UserRepo {
         url: String,
         successCallback: ((response: Response) -> Unit)?,
         failCallback: ((t: Throwable, response: Response?) -> Unit)?,
+        serverDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
+        clientDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
     )
 
     suspend fun removeChannel(

@@ -10,7 +10,15 @@ class WebSocketConnectionUseCase @Inject constructor(private val userRepo: UserR
         url: String,
         successCallback: ((response: Response) -> Unit)?,
         failCallback: ((t: Throwable, response: Response?) -> Unit)?,
-    ) = userRepo.createChannel(url, successCallback, failCallback)
+        serverDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
+        clientDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
+    ) = userRepo.createChannel(
+        url,
+        successCallback,
+        failCallback,
+        serverDisconnectCallback,
+        clientDisconnectCallback
+    )
 
     suspend fun removeChannel(
         onClosingConnection: ((code: Int, reason: String) -> Unit)?,

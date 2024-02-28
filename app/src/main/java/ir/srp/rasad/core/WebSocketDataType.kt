@@ -10,5 +10,6 @@ enum class WebSocketDataType {
     Grant,
     Deny,
     Data,
-    Failed
+    Failed,
+    Confirmation
 }

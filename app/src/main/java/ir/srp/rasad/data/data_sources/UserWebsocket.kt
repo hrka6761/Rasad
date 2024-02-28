@@ -27,9 +27,13 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
         url: String,
         onConnectSuccess: ((response: Response) -> Unit)?,
         onConnectFail: ((t: Throwable, response: Response?) -> Unit)?,
+        onServerDisconnect: ((t: Throwable, response: Response?) -> Unit)?,
+        onClientDisconnect: ((t: Throwable, response: Response?) -> Unit)?,
     ) {
         listener.onConnectSuccess = onConnectSuccess
         listener.onConnectFail = onConnectFail
+        listener.onServerDisconnect = onServerDisconnect
+        listener.onClientDisconnect = onClientDisconnect
 
         request = Request.Builder().url(url).build()
         webSocket = okHttpClient.newWebSocket(request, listener)
@@ -71,6 +75,8 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
 
         var onConnectSuccess: ((response: Response) -> Unit)? = null
         var onConnectFail: ((t: Throwable, response: Response?) -> Unit)? = null
+        var onServerDisconnect: ((t: Throwable, response: Response?) -> Unit)? = null
+        var onClientDisconnect: ((t: Throwable, response: Response?) -> Unit)? = null
         var onClosingConnection: ((code: Int, reason: String) -> Unit)? = null
         var onClosedConnection: ((code: Int, reason: String) -> Unit)? = null
         var onSendMessageFail: ((t: Throwable, response: Response?) -> Unit)? = null
@@ -88,6 +94,22 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             super.onFailure(webSocket, t, response)
+
+            if (t.message == "Connection reset") {
+                onServerDisconnect?.let {
+                    it(t, response)
+                    isConnected = false
+                }
+                return
+            }
+
+            if (t.message == "Software caused connection abort") {
+                onClientDisconnect?.let {
+                    it(t, response)
+                    isConnected = false
+                }
+                return
+            }
 
             onConnectFail?.let { it(t, response) }
             onSendMessageFail?.let { it(t, response) }

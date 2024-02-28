@@ -17,6 +17,7 @@
     <string name="btn_txt_negative_dialog">Cancel</string>
     <string name="btn_send_request">Request</string>
     <string name="btn_new_target">New target</string>
+    <string name="btn_cancel_request_waiting">Cancel</string>
 
     <string name="txt_login_toolbar_title">Login</string>
     <string name="txt_settings_toolbar_title">Settings</string>
@@ -37,6 +38,7 @@
     <string name="txt_mobile_title">Mobile</string>
     <string name="txt_edit_profile_bottom_sheet_desc">Please insert your new %1$s</string>
     <string name="txt_waiting">Please wait …</string>
+    <string name="txt_response_waiting">Waiting for targets responses …</string>
 
     <string name="snackbar_incorrect_mobile_number">The mobile number is not correct.</string>
     <string name="snackbar_incorrect_otp">The code is not correct.</string>
@@ -66,8 +68,22 @@
     <string name="fab_add_member_content_description">Add member</string>
     <string name="on_off_fab_content_description">On/Off</string>
 
-    <string name="start_observable_notification_msg">App is running in the background.</string>
-    <string name="stop_observable_notification_msg">App is stopped from the background.</string>
+    <string name="connecting_msg">Please wait …</string>
+    <string name="disconnect_msg">App Stopped and disconnected from the server.</string>
+
+    <string name="observable_connect_fail_msg">Failed to connect to the server !!!</string>
+    <string name="observable_login_success_msg">You are visible for permissive targets.</string>
+    <string name="observable_login_fail_msg">Failed to login to the server !!!</string>
+    <string name="observable_logout_success_msg">You are no longer visible.</string>
+    <string name="observable_logout_fail_msg">Failed to logout from the server !!!</string>
+
+    <string name="observer_connect_fail_msg">Failed to connect to the server !!!</string>
+    <string name="observer_login_success_msg">Waiting for targets responses.</string>
+    <string name="observer_login_fail_msg">Failed to login to the server !!!</string>
+    <string name="observer_logout_success_msg">Tracking Stopped.</string>
+    <string name="observer_logout_fail_msg">No</string>
+    <string name="observer_send_request_data_fail_msg">Failed to send request !!!</string>
+    <string name="cancel_observe_msg">Canceling target observation !!!</string>
 
     <string name="location">location</string>
 </resources>

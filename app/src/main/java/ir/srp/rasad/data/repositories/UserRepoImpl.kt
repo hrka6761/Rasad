@@ -102,14 +102,22 @@ class UserRepoImpl @Inject constructor(
     override suspend fun createChannel(
         url: String,
         successCallback: ((response: Response) -> Unit)?,
-        failCallback: ((t: Throwable, response: Response?) -> Unit)?
+        failCallback: ((t: Throwable, response: Response?) -> Unit)?,
+        serverDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
+        clientDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
     ) {
-        userWebsocket.createConnection(url, successCallback, failCallback)
+        userWebsocket.createConnection(
+            url,
+            successCallback,
+            failCallback,
+            serverDisconnectCallback,
+            clientDisconnectCallback
+        )
     }
 
     override suspend fun removeChannel(
         onClosingConnection: ((code: Int, reason: String) -> Unit)?,
-        onClosedConnection: ((code: Int, reason: String) -> Unit)?
+        onClosedConnection: ((code: Int, reason: String) -> Unit)?,
     ) {
         userWebsocket.removeConnection(onClosingConnection, onClosedConnection)
     }
