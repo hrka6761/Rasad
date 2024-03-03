@@ -20,6 +20,7 @@ import androidx.core.app.ServiceCompat
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.Constants
+import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
@@ -31,6 +32,8 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_LOADING
+import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_READY
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_SUCCESS
@@ -40,11 +43,14 @@ import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_SENDING_REQUEST_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
+import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
 import ir.srp.rasad.core.Constants.SERVICE_DATA
 import ir.srp.rasad.core.Constants.SERVICE_STATE
 import ir.srp.rasad.core.Constants.SERVICE_TYPE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
+import ir.srp.rasad.core.Constants.STATE_START
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVER
 import ir.srp.rasad.core.Constants.WEBSOCKET_URL
@@ -79,6 +85,7 @@ class MainService : Service() {
     private lateinit var username: String
     private lateinit var userToken: String
     private lateinit var userId: String
+    private var state = STATE_START
     private var isServiceStarted = false
     private var isObservableLogIn = false
     private var isObserverLogIn = false
@@ -138,6 +145,7 @@ class MainService : Service() {
 
                 isServiceStarted = true
                 connectObservableToServer()
+                state = OBSERVABLE_STATE_LOADING
             }
 
             STOP_SERVICE_OBSERVABLE -> {
@@ -169,6 +177,7 @@ class MainService : Service() {
 
                 isServiceStarted = true
                 connectObserver()
+                state = OBSERVER_STATE_LOADING
             }
 
             STOP_SERVICE_OBSERVER -> {
@@ -202,6 +211,7 @@ class MainService : Service() {
                             )
                         )
                         isObservableLogIn = true
+                        state = OBSERVABLE_STATE_READY
                     }
 
                     WebSocketDataType.LogOutObservable.name -> {
@@ -230,6 +240,7 @@ class MainService : Service() {
 
                     WebSocketDataType.RequestData.name -> {
                         sendSimpleMessageToHomeFragment(OBSERVER_SEND_REQUEST_DATA_SUCCESS)
+                        state = OBSERVER_STATE_WAITING_RESPONSE
                     }
                 }
             }
@@ -567,14 +578,17 @@ class MainService : Service() {
             when (msg.what) {
                 MESSENGER_TRANSFORMATION -> {
                     serviceMessenger = msg.replyTo
-                    val observableStateMsg =
+                    val appStateMsg =
+                        Message.obtain(null, APP_STATE, state)
+                    val observableLoginStateMsg =
                         Message.obtain(null, OBSERVABLE_LOGIN_STATE, isObservableLogIn)
-                    val observerStateMsg =
+                    val observerLoginStateMsg =
                         Message.obtain(null, OBSERVER_LOGIN_STATE, isObserverLogIn)
                     val serviceStateMsg =
                         Message.obtain(null, SERVICE_STATE, isServiceStarted)
-                    serviceMessenger?.send(observableStateMsg)
-                    serviceMessenger?.send(observerStateMsg)
+                    serviceMessenger?.send(appStateMsg)
+                    serviceMessenger?.send(observableLoginStateMsg)
+                    serviceMessenger?.send(observerLoginStateMsg)
                     serviceMessenger?.send(serviceStateMsg)
                 }
 

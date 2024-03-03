@@ -52,4 +52,14 @@ object Constants {
     const val OBSERVER_SEND_REQUEST_DATA_FAIL = 18
     const val DISCONNECT = 19
     const val CANCEL_OBSERVE = 20
+
+    const val APP_STATE = 21
+    const val STATE_START = 22
+    const val OBSERVER_STATE_LOADING = 23
+    const val OBSERVER_STATE_WAITING_RESPONSE = 24
+    const val OBSERVER_STATE_RECEIVING_DATA = 25
+    const val OBSERVABLE_STATE_LOADING = 26
+    const val OBSERVABLE_STATE_READY = 27
+    const val OBSERVABLE_STATE_PERMISSION_REQUEST = 28
+    const val OBSERVABLE_STATE_SENDING_DATA = 29
 }

@@ -26,6 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
+import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
@@ -37,6 +38,10 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_LOADING
+import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_PERMISSION_REQUEST
+import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_READY
+import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_SENDING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_SUCCESS
@@ -46,12 +51,16 @@ import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_SENDING_REQUEST_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
+import ir.srp.rasad.core.Constants.OBSERVER_STATE_RECEIVING_DATA
+import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
 import ir.srp.rasad.core.Constants.SERVICE_BUNDLE
 import ir.srp.rasad.core.Constants.SERVICE_DATA
 import ir.srp.rasad.core.Constants.SERVICE_STATE
 import ir.srp.rasad.core.Constants.SERVICE_TYPE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
+import ir.srp.rasad.core.Constants.STATE_START
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
 import ir.srp.rasad.core.Resource
@@ -452,6 +461,29 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         binding.addMemberFab.isEnabled = false
     }
 
+    private fun processAppState(state: Int) {
+        when (state) {
+            STATE_START -> {}
+            OBSERVER_STATE_LOADING -> {
+                disableViews()
+            }
+
+            OBSERVER_STATE_WAITING_RESPONSE -> {
+                disableViews()
+                observerSendRequestDataSuccessAction()
+            }
+
+            OBSERVER_STATE_RECEIVING_DATA -> {}
+            OBSERVABLE_STATE_LOADING -> {
+                disableViews()
+            }
+
+            OBSERVABLE_STATE_READY -> {}
+            OBSERVABLE_STATE_PERMISSION_REQUEST -> {}
+            OBSERVABLE_STATE_SENDING_DATA -> {}
+        }
+    }
+
 
     private inner class PermissionsRequestCallback : ActivityResultCallback<Map<String, Boolean>> {
         @RequiresApi(Build.VERSION_CODES.Q)
@@ -499,6 +531,11 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private inner class Handler : android.os.Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
+
+                APP_STATE -> {
+                    processAppState(msg.obj as Int)
+                }
+
                 OBSERVABLE_LOGIN_STATE -> {
                     isObservableLogIn = msg.obj as Boolean
                     if (isObservableLogIn) {
