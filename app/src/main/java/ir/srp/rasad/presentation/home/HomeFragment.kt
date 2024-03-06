@@ -28,16 +28,25 @@ import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
 import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
+import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
+import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_DENY_PERMISSION_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_DENY_PERMISSION_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_RECEIVE_REQUEST_PERMISSION
+import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_PERMISSION_DATA
+import ir.srp.rasad.core.Constants.OBSERVABLE_SENDING_PERMISSION_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_PERMISSION_REQUEST
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_READY
@@ -45,6 +54,7 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_SENDING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVER_DISCONNECT_ALL_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
@@ -66,10 +76,12 @@ import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
 import ir.srp.rasad.core.utils.MessageViewer.showError
+import ir.srp.rasad.core.utils.MessageViewer.showMessage
 import ir.srp.rasad.core.utils.MessageViewer.showWarning
 import ir.srp.rasad.core.utils.PermissionManager
 import ir.srp.rasad.databinding.FragmentHomeBinding
 import ir.srp.rasad.domain.models.TargetModel
+import ir.srp.rasad.domain.models.WebsocketDataModel
 import ir.srp.rasad.presentation.services.MainService
 import kotlinx.coroutines.launch
 
@@ -319,6 +331,12 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         requireContext().startForegroundService(intent)
     }
 
+    private fun startServiceForAction(action: String) {
+        val intent = Intent(requireContext(), MainService::class.java)
+        intent.action = action
+        requireContext().startService(intent)
+    }
+
     private fun saveNewTarget(target: TargetModel) {
         if (!this::savedTargets.isInitialized)
             savedTargets = HashSet()
@@ -338,6 +356,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     private fun onClickCancelWaiting() {
         binding.cancelWaitingBtn.visibility = View.GONE
+        binding.waitingTxt.text = getString(R.string.txt_waiting)
         enableViews()
         val msg = Message.obtain(null, CANCEL_OBSERVE)
         homeMessenger?.send(msg)
@@ -394,6 +413,52 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         showError(this, getString(R.string.observable_logout_fail_msg))
     }
 
+    private fun observableReceiveRequestPermissionAction(data: WebsocketDataModel) {
+        var interval = 0
+        val permissionsList = data.data?.split(",")
+        for (permission in permissionsList!!) {
+            if (permission.contains(data.username))
+                interval = permission.replace(data.username, "").toInt()
+        }
+
+        val msg = if (interval == 0)
+            "${data.username} want to track your location when it changes.\nAre you ok ?"
+        else
+            "${data.username} want to track your location every $interval minutes.\nAre you ok ?"
+
+        showSimpleDialog(
+            context = requireContext(),
+            msg = msg,
+            negativeAction = { dialog ->
+                startServiceForAction(DENY_PERMISSION_ACTION)
+            },
+            positiveAction = { dialog ->
+                startServiceForAction(GRANT_PERMISSION_ACTION)
+            }
+        )
+    }
+
+    private fun observableSendingPermissionResponseAction() {
+
+    }
+
+    private fun observableGrantPermissionFailAction(data: WebsocketDataModel) {
+        observableReceiveRequestPermissionAction(data)
+        showError(this, "Failed to send permission response !!!")
+    }
+
+    private fun observableDenyPermissionFailAction() {
+        showError(this, "Failed to send permission response !!!")
+    }
+
+    private fun observableGrantPermissionSuccessAction(target: String) {
+        showMessage(this, "You Grant permission for $target successfully.")
+    }
+
+    private fun observableDenyPermissionSuccessAction() {
+
+    }
+
 
     private fun observerConnectingAction() {
         isServiceStarted = true
@@ -436,10 +501,21 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         isObserverLogIn = false
     }
 
+    private fun observerDisconnectAllTargetAction() {
+        isServiceStarted = false
+        isObserverLogIn = false
+        binding.cancelWaitingBtn.visibility = View.GONE
+        binding.waitingTxt.text = getString(R.string.txt_waiting)
+        enableObservable()
+        enableViews()
+    }
 
-    private fun disconnectObservableAction() {
+
+    private fun disconnectAction() {
         isServiceStarted = false
         isObservableLogIn = false
+        binding.cancelWaitingBtn.visibility = View.GONE
+        binding.waitingTxt.text = getString(R.string.txt_waiting)
         enableViews()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
@@ -479,7 +555,15 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             }
 
             OBSERVABLE_STATE_READY -> {}
-            OBSERVABLE_STATE_PERMISSION_REQUEST -> {}
+            OBSERVABLE_STATE_PERMISSION_REQUEST -> {
+                val requestPermissionDataMsg =
+                    Message.obtain(null, OBSERVABLE_REQUEST_PERMISSION_DATA)
+                homeMessenger?.send(requestPermissionDataMsg)
+                binding.cancelWaitingBtn.visibility = View.GONE
+                binding.waitingTxt.text = getString(R.string.txt_waiting)
+                enableViews()
+            }
+
             OBSERVABLE_STATE_SENDING_DATA -> {}
         }
     }
@@ -558,8 +642,9 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 }
 
                 DISCONNECT -> {
-                    disconnectObservableAction()
+                    disconnectAction()
                 }
+
 
                 OBSERVABLE_CONNECTING -> {
                     observableConnectingAction()
@@ -588,6 +673,31 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 OBSERVABLE_LOGOUT_FAIL -> {
                     observableLogOutFailAction()
                 }
+
+                OBSERVABLE_RECEIVE_REQUEST_PERMISSION -> {
+                    observableReceiveRequestPermissionAction(msg.obj as WebsocketDataModel)
+                }
+
+                OBSERVABLE_SENDING_PERMISSION_RESPONSE -> {
+                    observableSendingPermissionResponseAction()
+                }
+
+                OBSERVABLE_GRANT_PERMISSION_FAIL -> {
+                    observableGrantPermissionFailAction(msg.obj as WebsocketDataModel)
+                }
+
+                OBSERVABLE_DENY_PERMISSION_FAIL -> {
+                    observableDenyPermissionFailAction()
+                }
+
+                OBSERVABLE_DENY_PERMISSION_SUCCESS -> {
+                    observableDenyPermissionSuccessAction()
+                }
+
+                OBSERVABLE_GRANT_PERMISSION_SUCCESS -> {
+                    observableGrantPermissionSuccessAction(msg.obj as String)
+                }
+
 
                 OBSERVER_CONNECTING -> {
                     observerConnectingAction()
@@ -619,6 +729,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
                 OBSERVER_SEND_REQUEST_DATA_FAIL -> {
                     observerSendRequestDataFailAction()
+                }
+
+                OBSERVER_DISCONNECT_ALL_TARGETS -> {
+                    observerDisconnectAllTargetAction()
                 }
 
                 else -> super.handleMessage(msg)

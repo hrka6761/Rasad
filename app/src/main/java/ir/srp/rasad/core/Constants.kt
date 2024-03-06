@@ -20,6 +20,8 @@ object Constants {
     const val START_SERVICE_OBSERVER = "startService_observer"
     const val STOP_SERVICE_OBSERVABLE = "stopService_observable"
     const val STOP_SERVICE_OBSERVER = "stopService_observer"
+    const val GRANT_PERMISSION_ACTION = "grant_permission"
+    const val DENY_PERMISSION_ACTION = "deny_permission"
     const val CLOSE_WEBSOCKET_STATUS_CODE = 1000
     const val CLOSE_WEBSOCKET_STATUS_REASON = "disconnect"
     const val TARGETS_PREFERENCE_KEY = "targets"
@@ -52,6 +54,15 @@ object Constants {
     const val OBSERVER_SEND_REQUEST_DATA_FAIL = 18
     const val DISCONNECT = 19
     const val CANCEL_OBSERVE = 20
+    const val OBSERVABLE_RECEIVE_REQUEST_PERMISSION = 30
+    const val OBSERVABLE_SENDING_PERMISSION_RESPONSE = 31
+    const val OBSERVABLE_GRANT_PERMISSION_FAIL = 32
+    const val OBSERVABLE_DENY_PERMISSION_FAIL = 33
+    const val OBSERVABLE_REQUEST_PERMISSION_DATA = 34
+    const val OBSERVABLE_DENY_PERMISSION_SUCCESS = 35
+    const val OBSERVABLE_GRANT_PERMISSION_SUCCESS = 36
+    const val OBSERVER_DISCONNECT_ALL_TARGETS = 37
+    const val OBSERVER_DISCONNECT_TARGET = 38
 
     const val APP_STATE = 21
     const val STATE_START = 22

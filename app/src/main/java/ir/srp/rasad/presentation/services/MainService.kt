@@ -4,39 +4,52 @@ import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Build.VERSION_CODES.O
+import android.os.Build.VERSION_CODES.Q
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
-import android.util.Log
+import android.widget.RemoteViews
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
-import ir.srp.rasad.core.Constants
 import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
+import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
+import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_DENY_PERMISSION_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_DENY_PERMISSION_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_RECEIVE_REQUEST_PERMISSION
+import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_PERMISSION_DATA
+import ir.srp.rasad.core.Constants.OBSERVABLE_SENDING_PERMISSION_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_LOADING
+import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_PERMISSION_REQUEST
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_READY
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVER_DISCONNECT_ALL_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
@@ -45,6 +58,7 @@ import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
+import ir.srp.rasad.core.Constants.SERVICE_BUNDLE
 import ir.srp.rasad.core.Constants.SERVICE_DATA
 import ir.srp.rasad.core.Constants.SERVICE_STATE
 import ir.srp.rasad.core.Constants.SERVICE_TYPE
@@ -90,9 +104,10 @@ class MainService : Service() {
     private var isObservableLogIn = false
     private var isObserverLogIn = false
     private val observableTargets = HashSet<String>()
-    private val observerTargets = HashSet<String>()
+    private val observerTargets = HashSet<TargetModel>()
+    private var requestPermissionData: WebsocketDataModel? = null
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(O)
     override fun onCreate() {
         super.onCreate()
 
@@ -108,14 +123,17 @@ class MainService : Service() {
         homeMessenger = Messenger(Handler())
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
+    @RequiresApi(Q)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val bundle = intent?.getBundleExtra(Constants.SERVICE_BUNDLE)
+        val bundle = intent?.getBundleExtra(SERVICE_BUNDLE)
+        val action = intent?.action
         bundle?.let { handleStartIntentData(it) }
+        action?.let { handleAction(action) }
 
         return START_STICKY
     }
 
+    @RequiresApi(O)
     override fun onBind(intent: Intent?): IBinder? {
         CoroutineScope(io).launch {
             transferWebsocketDataUseCase.receiveData(
@@ -127,7 +145,7 @@ class MainService : Service() {
     }
 
 
-    @RequiresApi(Build.VERSION_CODES.Q)
+    @RequiresApi(Q)
     private fun handleStartIntentData(bundle: Bundle) {
         when (bundle.getString(SERVICE_TYPE)) {
 
@@ -155,13 +173,12 @@ class MainService : Service() {
             START_SERVICE_OBSERVER -> {
                 val data = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                     bundle.getParcelableArray(SERVICE_DATA, TargetModel::class.java)
-                else {
+                else
                     bundle.getParcelableArray(SERVICE_DATA)
-                }
 
                 for (item in data!!) {
                     val target = item as TargetModel
-                    observerTargets.add(target.username)
+                    observerTargets.add(target)
                 }
 
                 ServiceCompat.startForeground(
@@ -176,7 +193,7 @@ class MainService : Service() {
                 )
 
                 isServiceStarted = true
-                connectObserver()
+                connectObserverToServer()
                 state = OBSERVER_STATE_LOADING
             }
 
@@ -188,6 +205,37 @@ class MainService : Service() {
         }
     }
 
+    @RequiresApi(O)
+    private fun handleAction(action: String) {
+        when (action) {
+
+            DENY_PERMISSION_ACTION -> {
+                requestPermissionData?.username?.let { observableSendDenyData(it) }
+                notificationManager.notify(
+                    NOTIFICATION_ID,
+                    createNotification(
+                        getString(R.string.app_name),
+                        getString(R.string.observable_login_success_msg),
+                        true
+                    )
+                )
+            }
+
+            GRANT_PERMISSION_ACTION -> {
+                requestPermissionData?.username?.let { observableSendGrantData(it) }
+                notificationManager.notify(
+                    NOTIFICATION_ID,
+                    createNotification(
+                        getString(R.string.app_name),
+                        getString(R.string.observable_login_success_msg),
+                        true
+                    )
+                )
+            }
+        }
+    }
+
+    @RequiresApi(O)
     private fun onReceiveTextMessage(text: String) {
         val data =
             jsonConverter.convertJsonStringToObject(
@@ -226,6 +274,7 @@ class MainService : Service() {
                             )
                         )
                         disconnectServer()
+                        state = STATE_START
                         isServiceStarted = false
                         isObservableLogIn = false
                     }
@@ -240,13 +289,75 @@ class MainService : Service() {
 
                     WebSocketDataType.RequestData.name -> {
                         sendSimpleMessageToHomeFragment(OBSERVER_SEND_REQUEST_DATA_SUCCESS)
+                        notificationManager.notify(
+                            NOTIFICATION_ID,
+                            createNotification(
+                                getString(R.string.app_name),
+                                getString(R.string.observer_login_success_msg),
+                                true
+                            )
+                        )
                         state = OBSERVER_STATE_WAITING_RESPONSE
+                    }
+
+                    WebSocketDataType.Deny.name -> {
+                        sendSimpleMessageToHomeFragment(OBSERVABLE_DENY_PERMISSION_SUCCESS)
+                    }
+
+                    WebSocketDataType.Grant.name -> {
+                        sendSimpleMessageToHomeFragment(
+                            OBSERVABLE_GRANT_PERMISSION_SUCCESS,
+                            requestPermissionData?.username
+                        )
+                        requestPermissionData = null
                     }
                 }
             }
 
+            WebSocketDataType.RequestPermission -> {
+                if (data.data != null) {
+                    sendSimpleMessageToHomeFragment(OBSERVABLE_RECEIVE_REQUEST_PERMISSION, data)
+                    handleRequestPermission(data)
+                }
+
+                requestPermissionData = data
+                state = OBSERVABLE_STATE_PERMISSION_REQUEST
+            }
+
+            WebSocketDataType.RequestData -> {
+                observableTargets.add(data.username)
+            }
+
             WebSocketDataType.Failed -> {
-                Log.i(TAG, "fail: $data")
+
+            }
+
+            WebSocketDataType.LogOutObservable -> {
+                for (target in observerTargets)
+                    if (target.username == data.username) {
+                        observerTargets.remove(target)
+                        break
+                    }
+                if (observerTargets.size <= 0) {
+                    sendSimpleMessageToHomeFragment(OBSERVER_DISCONNECT_ALL_TARGETS)
+                    ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+                    notificationManager.notify(
+                        NOTIFICATION_ID,
+                        createNotification(
+                            getString(R.string.app_name),
+                            getString(R.string.observer_disconnect_all_targets_msg),
+                            false
+                        )
+                    )
+                    disconnectServer()
+                    isServiceStarted = false
+                    isObserverLogIn = false
+                    state = STATE_START
+                }
+            }
+
+            WebSocketDataType.LogOutObserver -> {
+                observableTargets.remove(data.username)
             }
 
             else -> Unit
@@ -267,7 +378,7 @@ class MainService : Service() {
         serviceMessenger?.send(message)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(O)
     private fun createNotificationChannel() {
         notificationChannel = NotificationChannel(
             CHANNEL_ID, CHANNEL_ID,
@@ -286,8 +397,52 @@ class MainService : Service() {
             .build()
     }
 
+    @RequiresApi(O)
+    @SuppressLint("RemoteViewLayout")
+    private fun createPermissionNotification(
+        title: String,
+        collapseMessage: String,
+        extendMessage: String,
+        onGoing: Boolean,
+    ): Notification {
+        val permissionNotificationView =
+            RemoteViews(packageName, R.layout.permission_notification_view)
+        permissionNotificationView.setTextViewText(
+            R.id.permission_notification_message_txt,
+            extendMessage
+        )
+        val denyIntent = Intent(this, MainService::class.java)
+        denyIntent.action = DENY_PERMISSION_ACTION
+        val denyPendingIntent =
+            PendingIntent.getService(this, 1001, denyIntent, PendingIntent.FLAG_IMMUTABLE)
+        permissionNotificationView.setOnClickPendingIntent(
+            R.id.permission_notification_cancel_btn,
+            denyPendingIntent
+        )
+
+        val grantIntent = Intent(this, MainService::class.java)
+        grantIntent.action = GRANT_PERMISSION_ACTION
+        val grantPendingIntent =
+            PendingIntent.getService(this, 1002, grantIntent, PendingIntent.FLAG_IMMUTABLE)
+        permissionNotificationView.setOnClickPendingIntent(
+            R.id.permission_notification_ok_btn,
+            grantPendingIntent
+        )
+
+
+        return NotificationCompat
+            .Builder(this, CHANNEL_ID)
+            .setOngoing(onGoing)
+            .setContentTitle(title)
+            .setContentText(collapseMessage)
+            .setCustomBigContentView(permissionNotificationView)
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .build()
+    }
+
 
     // Observable functions ------------------------------------------------------------------------
+    @RequiresApi(O)
     private fun connectObservableToServer() {
         sendSimpleMessageToHomeFragment(OBSERVABLE_CONNECTING)
         CoroutineScope(io).launch {
@@ -301,13 +456,14 @@ class MainService : Service() {
         }
     }
 
+    @RequiresApi(O)
     private fun logOutObservable() {
         CoroutineScope(io).launch {
             transferWebsocketDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.LogOutObservable,
                     username = username,
-                    targets = null,
+                    targets = observableTargets.toTypedArray(),
                     data = null
                 ),
                 onSendMessageFail = { _, _ -> observableSendMessageFailAction(WebSocketDataType.LogOutObservable) }
@@ -315,11 +471,13 @@ class MainService : Service() {
         }
     }
 
+    @RequiresApi(O)
     private fun observableConnectSuccessAction() {
         sendSimpleMessageToHomeFragment(OBSERVABLE_CONNECT_SUCCESS)
         loginObservable()
     }
 
+    @RequiresApi(O)
     private fun loginObservable() {
         CoroutineScope(io).launch {
             transferWebsocketDataUseCase.sendData(
@@ -348,6 +506,7 @@ class MainService : Service() {
             )
         )
         isServiceStarted = false
+        state = STATE_START
     }
 
     private fun observableDisconnectAction() {
@@ -363,8 +522,11 @@ class MainService : Service() {
         )
         isServiceStarted = false
         isObservableLogIn = false
+        state = STATE_START
+        observableTargets.clear()
     }
 
+    @RequiresApi(O)
     private fun observableSendMessageFailAction(type: WebSocketDataType) {
         when (type) {
             WebSocketDataType.LogInObservable -> {
@@ -380,25 +542,111 @@ class MainService : Service() {
                 )
                 disconnectServer()
                 isServiceStarted = false
+                state = STATE_START
             }
 
             WebSocketDataType.LogOutObservable -> {
                 sendSimpleMessageToHomeFragment(OBSERVABLE_LOGOUT_FAIL)
             }
 
+            WebSocketDataType.Deny -> {
+                sendSimpleMessageToHomeFragment(OBSERVABLE_DENY_PERMISSION_FAIL)
+                notificationManager.notify(
+                    NOTIFICATION_ID,
+                    createNotification(
+                        getString(R.string.app_name),
+                        getString(R.string.observable_login_success_msg),
+                        true
+                    )
+                )
+            }
+
+            WebSocketDataType.Grant -> {
+                sendSimpleMessageToHomeFragment(
+                    OBSERVABLE_GRANT_PERMISSION_FAIL,
+                    requestPermissionData
+                )
+                requestPermissionData?.let { handleRequestPermission(it) }
+            }
+
             else -> Unit
+        }
+    }
+
+    @RequiresApi(O)
+    private fun handleRequestPermission(data: WebsocketDataModel) {
+        var interval = 0
+        val permissionsList = data.data?.split(",")
+        for (permission in permissionsList!!) {
+            if (permission.contains(username))
+                interval = permission.replace(username, "").toInt()
+        }
+
+        val msg = if (interval == 0)
+            "${data.username} want to track your location when it changes.\nAre you ok ?"
+        else
+            "${data.username} want to track your location every $interval minutes.\nAre you ok ?"
+
+        val permissionNotification = createPermissionNotification(
+            getString(R.string.app_name),
+            "Incoming Request permission from ${data.username}.",
+            msg,
+            true
+        )
+
+        notificationManager.notify(
+            NOTIFICATION_ID,
+            permissionNotification
+        )
+    }
+
+    @RequiresApi(O)
+    private fun observableSendDenyData(target: String) {
+        CoroutineScope(io).launch {
+            sendSimpleMessageToHomeFragment(OBSERVABLE_SENDING_PERMISSION_RESPONSE)
+            transferWebsocketDataUseCase.sendData(
+                data = WebsocketDataModel(
+                    type = WebSocketDataType.Deny,
+                    username = username,
+                    targets = arrayOf(target),
+                    data = null
+                ),
+                onSendMessageFail = { _, _ ->
+                    observableSendMessageFailAction(WebSocketDataType.Deny)
+                }
+            )
+        }
+    }
+
+    @RequiresApi(O)
+    private fun observableSendGrantData(target: String) {
+        CoroutineScope(io).launch {
+            sendSimpleMessageToHomeFragment(OBSERVABLE_SENDING_PERMISSION_RESPONSE)
+            transferWebsocketDataUseCase.sendData(
+                data = WebsocketDataModel(
+                    type = WebSocketDataType.Grant,
+                    username = username,
+                    targets = arrayOf(target),
+                    data = null
+                ),
+                onSendMessageFail = { t, _ ->
+                    observableSendMessageFailAction(WebSocketDataType.Grant)
+                }
+            )
         }
     }
 
 
     // Observer functions ------------------------------------------------------------------------
     private fun logOutObserver() {
+        val targetsUserName =
+            observerTargets.map { targetModel -> targetModel.username }.toTypedArray()
         CoroutineScope(io).launch {
             transferWebsocketDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.LogOutObserver,
                     username = username,
-                    targets = observerTargets.toTypedArray(),
+                    targets = targetsUserName,
                     data = null
                 ),
                 onSendMessageFail = { _, _ -> observerSendMessageFailAction(WebSocketDataType.LogOutObserver) }
@@ -408,28 +656,25 @@ class MainService : Service() {
 
     private fun observerLoginSuccessAction() {
         sendSimpleMessageToHomeFragment(OBSERVER_LOGIN_SUCCESS)
-        notificationManager.notify(
-            NOTIFICATION_ID,
-            createNotification(
-                getString(R.string.app_name),
-                getString(R.string.observer_login_success_msg),
-                true
-            )
-        )
         isObserverLogIn = true
-
         observerSendRequestData(observerTargets.toTypedArray())
     }
 
-    private fun observerSendRequestData(targets: Array<String>) {
+    private fun observerSendRequestData(targets: Array<TargetModel>) {
+        val targetsUserName =
+            targets.map { targetModel -> targetModel.username }.toTypedArray()
+        val data = StringBuffer("")
+        for (target in targets)
+            data.append(target.username + target.permissions.coordinate + ",")
+
         CoroutineScope(io).launch {
             sendSimpleMessageToHomeFragment(OBSERVER_SENDING_REQUEST_DATA)
             transferWebsocketDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.RequestData,
                     username = username,
-                    targets = targets,
-                    data = null
+                    targets = targetsUserName,
+                    data = data.toString()
                 ),
                 onSendMessageFail = { _, _ ->
                     observerSendMessageFailAction(WebSocketDataType.RequestData)
@@ -438,7 +683,7 @@ class MainService : Service() {
         }
     }
 
-    private fun connectObserver() {
+    private fun connectObserverToServer() {
         sendSimpleMessageToHomeFragment(OBSERVER_CONNECTING)
         CoroutineScope(io).launch {
             webSocketConnectionUseCase.createChannel(
@@ -484,6 +729,7 @@ class MainService : Service() {
             )
         )
         isServiceStarted = false
+        state = STATE_START
         observerTargets.clear()
     }
 
@@ -501,6 +747,7 @@ class MainService : Service() {
         )
         isServiceStarted = false
         isObserverLogIn = false
+        state = STATE_START
         observerTargets.clear()
     }
 
@@ -535,6 +782,7 @@ class MainService : Service() {
         )
         disconnectServer()
         isServiceStarted = false
+        state = STATE_START
         observerTargets.clear()
     }
 
@@ -552,6 +800,7 @@ class MainService : Service() {
         disconnectServer()
         isServiceStarted = false
         isObserverLogIn = false
+        state = STATE_START
         observerTargets.clear()
     }
 
@@ -568,6 +817,7 @@ class MainService : Service() {
         disconnectServer()
         isServiceStarted = false
         isObserverLogIn = false
+        state = STATE_START
         observerTargets.clear()
     }
 
@@ -594,6 +844,13 @@ class MainService : Service() {
 
                 CANCEL_OBSERVE -> {
                     cancelObservation()
+                }
+
+                OBSERVABLE_REQUEST_PERMISSION_DATA -> {
+                    sendSimpleMessageToHomeFragment(
+                        OBSERVABLE_RECEIVE_REQUEST_PERMISSION,
+                        requestPermissionData
+                    )
                 }
 
                 else -> super.handleMessage(msg)
