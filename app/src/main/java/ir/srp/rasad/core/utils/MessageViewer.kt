@@ -8,26 +8,29 @@ import com.google.android.material.snackbar.Snackbar
 object MessageViewer {
 
     fun showError(fragment: Fragment, message: String, duration: Int = Snackbar.LENGTH_LONG) {
-        Snackbar.make(fragment.requireView(), message, duration).show()
+        val view = fragment.view
+        view?.let { Snackbar.make(it, message, duration).show() }
     }
 
-    fun showError(context: Context, message: String, duration: Int = Toast.LENGTH_LONG) {
-        Toast.makeText(context, message, duration).show()
+    fun showError(context: Context?, message: String, duration: Int = Toast.LENGTH_LONG) {
+        context?.let { Toast.makeText(it, message, duration).show() }
     }
 
     fun showWarning(fragment: Fragment, message: String, duration: Int = Snackbar.LENGTH_SHORT) {
-        Snackbar.make(fragment.requireView(), message, duration).show()
+        val view = fragment.view
+        view?.let { Snackbar.make(it, message, duration).show() }
     }
 
-    fun showWarning(context: Context, message: String, duration: Int = Toast.LENGTH_SHORT) {
-        Toast.makeText(context, message, duration).show()
+    fun showWarning(context: Context?, message: String, duration: Int = Toast.LENGTH_SHORT) {
+        context?.let { Toast.makeText(it, message, duration).show() }
     }
 
     fun showMessage(fragment: Fragment, message: String, duration: Int = Snackbar.LENGTH_SHORT) {
-        Snackbar.make(fragment.requireView(), message, duration).show()
+        val view = fragment.view
+        view?.let { Snackbar.make(it, message, duration).show() }
     }
 
-    fun showMessage(context: Context, message: String, duration: Int = Toast.LENGTH_SHORT) {
-        Toast.makeText(context, message, duration).show()
+    fun showMessage(context: Context?, message: String, duration: Int = Toast.LENGTH_SHORT) {
+        context?.let { Toast.makeText(it, message, duration).show() }
     }
 }
