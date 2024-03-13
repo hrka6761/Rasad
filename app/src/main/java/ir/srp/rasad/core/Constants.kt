@@ -2,8 +2,8 @@ package ir.srp.rasad.core
 
 object Constants {
 
-    const val HTTP_BASE_URL = "http://192.168.54.187:1367/api/user/"
-    const val WEBSOCKET_URL = "ws://192.168.54.187:11066"
+    const val HTTP_BASE_URL = "http://192.168.1.3:1367/api/user/"
+    const val WEBSOCKET_URL = "ws://192.168.1.3:11066"
 
     const val USER_STATE_PREFERENCE_KEY = "userAccountState"
     const val USER_ACCOUNT_INFO_PREFERENCE_KEY = "userAccountInfo"
@@ -67,9 +67,13 @@ object Constants {
     const val OBSERVER_REQUEST_LAST_RECEIVED_DATA = 40
     const val OBSERVER_LAST_RECEIVED_DATA = 41
     const val OBSERVABLE_SEND_DATA_SUCCESS = 42
+    const val OBSERVABLE_ADDED_NEW_OBSERVER = 43
+    const val OBSERVABLE_DISCONNECT_ALL_TARGETS = 44
+    const val OBSERVABLE_REQUEST_TARGETS = 45
+    const val OBSERVER_FAILURE = 46
 
     const val APP_STATE = 21
-    const val STATE_START = 22
+    const val STATE_DISABLE = 22
 
     const val OBSERVER_STATE_LOADING = 23
     const val OBSERVER_STATE_WAITING_RESPONSE = 24

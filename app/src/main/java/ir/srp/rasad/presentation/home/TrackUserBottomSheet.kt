@@ -163,9 +163,14 @@ class TrackUserBottomSheet(
                 locationSendingInterval
             )
 
+            val name = binding.nameEdt.text.toString().ifEmpty { binding.targetEdt.text.toString() }
+                .replace(" ", "")
+            val username = binding.targetEdt.text.toString()
+                .replace(" ", "")
+
             val target = TargetModel(
-                binding.nameEdt.text.toString().ifEmpty { binding.targetEdt.text.toString() },
-                binding.targetEdt.text.toString(),
+                name,
+                username,
                 R.drawable.marker10,
                 permission
             )

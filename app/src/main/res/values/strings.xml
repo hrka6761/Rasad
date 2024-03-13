@@ -13,6 +13,7 @@
     <string name="btn_txt_update">Update %1$s</string>
     <string name="btn_txt_track_me">Track me</string>
     <string name="btn_txt_track_other">Track other</string>
+    <string name="btn_txt_stop_track">Track other</string>
     <string name="btn_txt_positive_dialog">OK</string>
     <string name="btn_txt_negative_dialog">Cancel</string>
     <string name="btn_send_request">Request</string>
@@ -61,8 +62,6 @@
     <string name="dialog_basic_location_dialog_msg">You need to grant location permission for the app to access your current location.</string>
     <string name="dialog_background_location_dialog_msg">To continue working with the program after closing it, you must set the location access to the highest level.\n\"Allow all the time\"</string>
     <string name="dialog_remove_saved_target_msg">Are you sure to remove %1$s from the targets list.</string>
-
-    <string name="img_content_description">Settings</string>
 
     <string name="tag_edit_profile_bottom_sheet">edit_profile_dialog</string>
     <string name="fab_add_member_content_description">Add member</string>

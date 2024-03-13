@@ -2,6 +2,7 @@ package ir.srp.rasad.presentation.home
 
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
@@ -30,7 +31,6 @@ import com.carto.styles.MarkerStyleBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
-import ir.srp.rasad.core.Constants
 import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
@@ -38,6 +38,7 @@ import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.OBSERVER_LAST_RECEIVED_DATA
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
+import ir.srp.rasad.core.Constants.OBSERVABLE_ADDED_NEW_OBSERVER
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_SUCCESS
@@ -48,10 +49,12 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_DENY_PERMISSION_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_DISCONNECT_ALL_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECEIVE_REQUEST_PERMISSION
 import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_PERMISSION_DATA
+import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVABLE_SENDING_PERMISSION_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVABLE_SEND_DATA_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_LOADING
@@ -62,6 +65,7 @@ import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_DISCONNECT_ALL_TARGETS
+import ir.srp.rasad.core.Constants.OBSERVER_FAILURE
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
@@ -79,7 +83,7 @@ import ir.srp.rasad.core.Constants.SERVICE_STATE
 import ir.srp.rasad.core.Constants.SERVICE_TYPE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
-import ir.srp.rasad.core.Constants.STATE_START
+import ir.srp.rasad.core.Constants.STATE_DISABLE
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
 import ir.srp.rasad.core.Resource
@@ -91,6 +95,7 @@ import ir.srp.rasad.core.utils.MessageViewer.showWarning
 import ir.srp.rasad.core.utils.PermissionManager
 import ir.srp.rasad.databinding.FragmentHomeBinding
 import ir.srp.rasad.domain.models.DataModel
+import ir.srp.rasad.domain.models.ErrorDataModel
 import ir.srp.rasad.domain.models.TargetModel
 import ir.srp.rasad.domain.models.WebsocketDataModel
 import ir.srp.rasad.presentation.services.MainService
@@ -119,6 +124,9 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private lateinit var savedTargets: HashSet<TargetModel>
     val trackUserBottomSheet = TrackUserBottomSheet(this)
     private var marker: Marker? = null
+    private var permissionDialog: AlertDialog? = null
+    private val observers = mutableListOf<String>()
+    private val observables = mutableListOf<String>()
 
     @Inject
     lateinit var jsonConverter: JsonConverter
@@ -144,12 +152,11 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         initialize()
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
 
         unBindService()
     }
@@ -287,6 +294,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         disableViews()
     }
 
+    private fun onShortClickOnOff() {
+        showWarning(this, getString(R.string.snackbar_short_click_msg))
+    }
+
     private fun disableViews() {
         binding.progressBar.visibility = View.VISIBLE
         binding.onOffFab.isEnabled = false
@@ -301,15 +312,29 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         binding.settingsImg.isEnabled = true
     }
 
-    private fun onShortClickOnOff() {
-        showWarning(this, getString(R.string.snackbar_short_click_msg))
-    }
-
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun initTrackOtherButton() {
         binding.addMemberFab.setOnClickListener { showTrackUserSheet() }
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun showTrackUserSheet() {
+        if (!permissionManager.hasNotificationPermission()) {
+            showSimpleDialog(
+                context = requireContext(),
+                msg = getString(R.string.dialog_notification_dialog_msg),
+                negativeAction = { dialog ->
+                    showWarning(this, getString(R.string.snackbar_notification_negative_msg))
+                    dialog.dismiss()
+                },
+                positiveAction = { _ ->
+                    permissionManager.getNotificationPermission()
+                }
+            )
+
+            return
+        }
+
         if (isObserverTrackStarted) {
             val msg = Message.obtain(null, CANCEL_OBSERVE)
             homeMessenger?.send(msg)
@@ -390,13 +415,13 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun onClickCancelWaiting() {
+        isServiceStarted = false
+        isObserverLogIn = false
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.waitingTxt.text = getString(R.string.txt_waiting)
         enableViews()
         val msg = Message.obtain(null, CANCEL_OBSERVE)
         homeMessenger?.send(msg)
-        isServiceStarted = false
-        isObserverLogIn = false
     }
 
     private fun createMarker(loc: LatLng, markerIcon: Int): Marker {
@@ -433,40 +458,41 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun observableConnectionFailAction() {
+        isServiceStarted = false
         enableViews()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
-        isServiceStarted = false
         showError(this, getString(R.string.observable_connect_fail_msg))
     }
 
     private fun observableLogInSuccessAction() {
-        enableViews()
         isObservableLogIn = true
+        enableViews()
         disableObserver()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
     }
 
     private fun observableLogInFailAction() {
+        isServiceStarted = false
         enableViews()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
-        isServiceStarted = false
         showError(this, getString(R.string.observable_login_fail_msg))
     }
 
     private fun observableLogOutSuccessAction() {
-        enableViews()
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
         isServiceStarted = false
         isObservableLogIn = false
+        binding.onOffFab.backgroundTintList =
+            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+        binding.trackersContainer.visibility = View.GONE
+        enableViews()
+        enableObserver()
     }
 
     private fun observableLogOutFailAction() {
         enableViews()
-        enableObserver()
         showError(this, getString(R.string.observable_logout_fail_msg))
     }
 
@@ -483,20 +509,21 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         else
             "${data.username} want to track your location every $interval minutes.\nAre you ok ?"
 
-        showSimpleDialog(
+        permissionDialog = showSimpleDialog(
             context = requireContext(),
             msg = msg,
-            negativeAction = { dialog ->
+            negativeAction = { _ ->
                 startServiceForAction(DENY_PERMISSION_ACTION)
             },
-            positiveAction = { dialog ->
+            positiveAction = { _ ->
                 startServiceForAction(GRANT_PERMISSION_ACTION)
             }
         )
     }
 
     private fun observableSendingPermissionResponseAction() {
-
+        permissionDialog?.dismiss()
+        permissionDialog = null
     }
 
     private fun observableGrantPermissionFailAction(data: WebsocketDataModel) {
@@ -518,6 +545,15 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     private fun observableSendDataSuccessAction(data: DataModel) {
 
+    }
+
+    private fun newObserverAddedAction(observableTargets: HashSet<String>) {
+        binding.trackersContainer.visibility = View.VISIBLE
+        binding.trackersNumber.text = observableTargets.size.toString()
+    }
+
+    private fun disconnectAllObserverAction() {
+        binding.trackersContainer.visibility = View.GONE
     }
 
 
@@ -556,10 +592,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun observerSendRequestDataFailAction() {
-        enableViews()
-        showError(this, getString(R.string.observer_send_request_data_fail_msg))
         isServiceStarted = false
         isObserverLogIn = false
+        enableViews()
+        showError(this, getString(R.string.observer_send_request_data_fail_msg))
     }
 
     private fun observerDisconnectAllTargetAction() {
@@ -587,13 +623,41 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             disableObservable()
             binding.cancelWaitingBtn.visibility = View.GONE
             binding.waitingTxt.text = getString(R.string.txt_waiting)
-            binding.addMemberFab.text = "Stop track"
+            binding.addMemberFab.text = getString(R.string.btn_txt_stop_track)
             binding.addMemberFab.setIconResource(R.drawable.stop)
             isObserverTrackStarted = true
         } else {
             binding.map.moveCamera(LatLng(data.latitude, data.longitude), 2f)
             marker?.latLng = LatLng(data.latitude, data.longitude)
         }
+    }
+
+    private fun receiveLastDataAction(lastReceivedData: DataModel) {
+        if (marker == null) {
+            val markerIcon = getTargetMarkerIcon(lastReceivedData.targetUsername)
+            binding.map.moveCamera(
+                LatLng(
+                    lastReceivedData.latitude,
+                    lastReceivedData.longitude
+                ), 2f
+            )
+            marker = createMarker(
+                LatLng(
+                    lastReceivedData.latitude,
+                    lastReceivedData.longitude
+                ), markerIcon
+            )
+            binding.map.addMarker(marker)
+        }
+    }
+
+    private fun failedObserveAction(errorData: ErrorDataModel) {
+        isServiceStarted = false
+        isObserverLogIn = false
+        binding.cancelWaitingBtn.visibility = View.GONE
+        binding.waitingTxt.text = getString(R.string.txt_waiting)
+        enableViews()
+        showError(this, "${errorData.code}: ${errorData.reason}")
     }
 
     private fun getTargetMarkerIcon(username: String): Int {
@@ -615,18 +679,24 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private fun disconnectAction() {
         isServiceStarted = false
         isObservableLogIn = false
+        isObserverLogIn = false
         isObserverTrackStarted = false
+        permissionDialog?.dismiss()
         binding.cancelWaitingBtn.visibility = View.GONE
-        binding.waitingTxt.text = getString(R.string.txt_waiting)
-        enableViews()
-        binding.addMemberFab.text = getString(R.string.btn_txt_track_other)
         binding.addMemberFab.setIconResource(R.drawable.add)
-        marker = null
-        binding.cancelWaitingBtn.visibility = View.GONE
+        if (marker != null) {
+            binding.map.removeMarker(marker)
+            marker = null
+        }
         binding.waitingTxt.text = getString(R.string.txt_waiting)
-        enableObservable()
+        binding.cancelWaitingBtn.visibility = View.GONE
+        binding.addMemberFab.text = getString(R.string.btn_txt_track_other)
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+        binding.trackersContainer.visibility = View.GONE
+        enableObservable()
+        enableObserver()
+        enableViews()
     }
 
     private fun enableObservable() {
@@ -647,7 +717,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     private fun processAppState(state: Int) {
         when (state) {
-            STATE_START -> {}
+            STATE_DISABLE -> {}
             OBSERVER_STATE_LOADING -> {
                 disableViews()
             }
@@ -662,7 +732,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 disableObservable()
                 binding.cancelWaitingBtn.visibility = View.GONE
                 binding.waitingTxt.text = getString(R.string.txt_waiting)
-                binding.addMemberFab.text = "Stop track"
+                binding.addMemberFab.text = getString(R.string.btn_txt_stop_track)
                 binding.addMemberFab.setIconResource(R.drawable.stop)
                 isObserverTrackStarted = true
 
@@ -684,7 +754,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 enableViews()
             }
 
-            OBSERVABLE_STATE_SENDING_DATA -> {}
+            OBSERVABLE_STATE_SENDING_DATA -> {
+                val msg = Message.obtain(null, OBSERVABLE_REQUEST_TARGETS)
+                homeMessenger?.send(msg)
+            }
         }
     }
 
@@ -827,6 +900,14 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                     observableSendDataSuccessAction(dataModel)
                 }
 
+                OBSERVABLE_ADDED_NEW_OBSERVER -> {
+                    newObserverAddedAction(msg.obj as HashSet<String>)
+                }
+
+                OBSERVABLE_DISCONNECT_ALL_TARGETS -> {
+                    disconnectAllObserverAction()
+                }
+
 
                 OBSERVER_CONNECTING -> {
                     observerConnectingAction()
@@ -869,23 +950,11 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 }
 
                 OBSERVER_LAST_RECEIVED_DATA -> {
-                    if (marker == null) {
-                        val lastReceivedData = msg.obj as DataModel
-                        val markerIcon = getTargetMarkerIcon(lastReceivedData.targetUsername)
-                        binding.map.moveCamera(
-                            LatLng(
-                                lastReceivedData.latitude,
-                                lastReceivedData.longitude
-                            ), 2f
-                        )
-                        marker = createMarker(
-                            LatLng(
-                                lastReceivedData.latitude,
-                                lastReceivedData.longitude
-                            ), markerIcon
-                        )
-                        binding.map.addMarker(marker)
-                    }
+                    receiveLastDataAction(msg.obj as DataModel)
+                }
+
+                OBSERVER_FAILURE -> {
+                    failedObserveAction(msg.obj as ErrorDataModel)
                 }
 
                 else -> super.handleMessage(msg)

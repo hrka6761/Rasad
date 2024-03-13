@@ -12,8 +12,8 @@ object Dialog {
         msg: String,
         negativeAction: (dialog: DialogInterface) -> Unit,
         positiveAction: (dialog: DialogInterface) -> Unit,
-    ) {
-        AlertDialog.Builder(context).setMessage(msg)
+    ): AlertDialog? {
+        return AlertDialog.Builder(context).setMessage(msg)
             .setPositiveButton(context.getString(R.string.btn_txt_positive_dialog)) { dialog, _ ->
                 positiveAction(dialog)
             }
