@@ -7,5 +7,6 @@ import kotlinx.parcelize.Parcelize
 data class TargetModel(
     val name: String,
     val username: String,
+    val markerIcon: Int,
     val permissions: TargetPermissionsModel
 ) : Parcelable

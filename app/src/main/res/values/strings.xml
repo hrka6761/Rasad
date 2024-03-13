@@ -85,6 +85,7 @@
     <string name="observer_send_request_data_fail_msg">Failed to send request !!!</string>
     <string name="cancel_observe_msg">Canceling target observation !!!</string>
     <string name="observer_disconnect_all_targets_msg">All targets are disconnected and unreachable !!!</string>
+    <string name="observer_receive_data_msg">you are tracking %1$s !!!!</string>
 
     <string name="location">location</string>
 </resources>

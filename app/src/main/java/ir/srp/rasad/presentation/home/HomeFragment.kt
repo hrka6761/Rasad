@@ -6,6 +6,7 @@ import android.content.ComponentName
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Build.VERSION_CODES.O
 import android.os.Bundle
@@ -23,14 +24,19 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import com.carto.styles.AnimationStyleBuilder
+import com.carto.styles.AnimationType
+import com.carto.styles.MarkerStyleBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
+import ir.srp.rasad.core.Constants
 import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
+import ir.srp.rasad.core.Constants.OBSERVER_LAST_RECEIVED_DATA
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_FAIL
@@ -47,6 +53,7 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECEIVE_REQUEST_PERMISSION
 import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_PERMISSION_DATA
 import ir.srp.rasad.core.Constants.OBSERVABLE_SENDING_PERMISSION_RESPONSE
+import ir.srp.rasad.core.Constants.OBSERVABLE_SEND_DATA_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_PERMISSION_REQUEST
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_READY
@@ -58,12 +65,14 @@ import ir.srp.rasad.core.Constants.OBSERVER_DISCONNECT_ALL_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVER_RECEIVE_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_SENDING_REQUEST_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_RECEIVING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
+import ir.srp.rasad.core.Constants.OBSERVER_REQUEST_LAST_RECEIVED_DATA
 import ir.srp.rasad.core.Constants.SERVICE_BUNDLE
 import ir.srp.rasad.core.Constants.SERVICE_DATA
 import ir.srp.rasad.core.Constants.SERVICE_STATE
@@ -75,15 +84,21 @@ import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
+import ir.srp.rasad.core.utils.JsonConverter
 import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.utils.MessageViewer.showMessage
 import ir.srp.rasad.core.utils.MessageViewer.showWarning
 import ir.srp.rasad.core.utils.PermissionManager
 import ir.srp.rasad.databinding.FragmentHomeBinding
+import ir.srp.rasad.domain.models.DataModel
 import ir.srp.rasad.domain.models.TargetModel
 import ir.srp.rasad.domain.models.WebsocketDataModel
 import ir.srp.rasad.presentation.services.MainService
 import kotlinx.coroutines.launch
+import org.neshan.common.model.LatLng
+import org.neshan.mapsdk.internal.utils.BitmapUtils
+import org.neshan.mapsdk.model.Marker
+import javax.inject.Inject
 
 @Suppress("UNCHECKED_CAST")
 @AndroidEntryPoint
@@ -99,9 +114,14 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private var isServiceStarted = false
     private var isObservableLogIn = false
     private var isObserverLogIn = false
+    private var isObserverTrackStarted = false
     private val serviceConnection = ServiceConnection()
     private lateinit var savedTargets: HashSet<TargetModel>
     val trackUserBottomSheet = TrackUserBottomSheet(this)
+    private var marker: Marker? = null
+
+    @Inject
+    lateinit var jsonConverter: JsonConverter
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -290,6 +310,21 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun showTrackUserSheet() {
+        if (isObserverTrackStarted) {
+            val msg = Message.obtain(null, CANCEL_OBSERVE)
+            homeMessenger?.send(msg)
+            enableObservable()
+            binding.map.removeMarker(marker)
+            binding.addMemberFab.text = getString(R.string.btn_txt_track_other)
+            binding.addMemberFab.setIconResource(R.drawable.add)
+            isObserverTrackStarted = false
+            isObserverLogIn = false
+            isServiceStarted = false
+            marker = null
+
+            return
+        }
+
         if (this::savedTargets.isInitialized) {
             val args = Bundle()
             val targets = mutableListOf<TargetModel>()
@@ -362,6 +397,28 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         homeMessenger?.send(msg)
         isServiceStarted = false
         isObserverLogIn = false
+    }
+
+    private fun createMarker(loc: LatLng, markerIcon: Int): Marker {
+        val animStBl = AnimationStyleBuilder()
+        animStBl.fadeAnimationType = AnimationType.ANIMATION_TYPE_SMOOTHSTEP
+        animStBl.sizeAnimationType = AnimationType.ANIMATION_TYPE_SPRING
+        animStBl.phaseInDuration = 0.8f
+        animStBl.phaseOutDuration = 0.8f
+        val animSt = animStBl.buildStyle()
+
+        val markStCr = MarkerStyleBuilder()
+        markStCr.size = 30f
+        markStCr.bitmap = BitmapUtils.createBitmapFromAndroidBitmap(
+            BitmapFactory.decodeResource(
+                resources, markerIcon
+            )
+        )
+
+        markStCr.animationStyle = animSt
+        val markSt = markStCr.buildStyle()
+
+        return Marker(loc, markSt)
     }
 
 
@@ -459,6 +516,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     }
 
+    private fun observableSendDataSuccessAction(data: DataModel) {
+
+    }
+
 
     private fun observerConnectingAction() {
         isServiceStarted = true
@@ -502,21 +563,68 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun observerDisconnectAllTargetAction() {
+        if (marker != null)
+            binding.map.removeMarker(marker)
         isServiceStarted = false
         isObserverLogIn = false
+        isObserverTrackStarted = false
+        binding.addMemberFab.text = getString(R.string.btn_txt_track_other)
+        binding.addMemberFab.setIconResource(R.drawable.add)
+        marker = null
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.waitingTxt.text = getString(R.string.txt_waiting)
         enableObservable()
         enableViews()
     }
 
+    private fun observerReceiveDataAction(data: DataModel) {
+        if (marker == null) {
+            val markerIcon = getTargetMarkerIcon(data.targetUsername)
+            binding.map.moveCamera(LatLng(data.latitude, data.longitude), 2f)
+            marker = createMarker(LatLng(data.latitude, data.longitude), markerIcon)
+            binding.map.addMarker(marker)
+            enableViews()
+            disableObservable()
+            binding.cancelWaitingBtn.visibility = View.GONE
+            binding.waitingTxt.text = getString(R.string.txt_waiting)
+            binding.addMemberFab.text = "Stop track"
+            binding.addMemberFab.setIconResource(R.drawable.stop)
+            isObserverTrackStarted = true
+        } else {
+            binding.map.moveCamera(LatLng(data.latitude, data.longitude), 2f)
+            marker?.latLng = LatLng(data.latitude, data.longitude)
+        }
+    }
+
+    private fun getTargetMarkerIcon(username: String): Int {
+        var icon: Int = R.drawable.marker10
+
+        if (this::savedTargets.isInitialized) {
+            for (target in savedTargets) {
+                if (target.username == username) {
+                    icon = target.markerIcon
+                    break
+                }
+            }
+        }
+
+        return icon
+    }
+
 
     private fun disconnectAction() {
         isServiceStarted = false
         isObservableLogIn = false
+        isObserverTrackStarted = false
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.waitingTxt.text = getString(R.string.txt_waiting)
         enableViews()
+        binding.addMemberFab.text = getString(R.string.btn_txt_track_other)
+        binding.addMemberFab.setIconResource(R.drawable.add)
+        marker = null
+        binding.cancelWaitingBtn.visibility = View.GONE
+        binding.waitingTxt.text = getString(R.string.txt_waiting)
+        enableObservable()
         binding.onOffFab.backgroundTintList =
             ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
     }
@@ -549,7 +657,19 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 observerSendRequestDataSuccessAction()
             }
 
-            OBSERVER_STATE_RECEIVING_DATA -> {}
+            OBSERVER_STATE_RECEIVING_DATA -> {
+                enableViews()
+                disableObservable()
+                binding.cancelWaitingBtn.visibility = View.GONE
+                binding.waitingTxt.text = getString(R.string.txt_waiting)
+                binding.addMemberFab.text = "Stop track"
+                binding.addMemberFab.setIconResource(R.drawable.stop)
+                isObserverTrackStarted = true
+
+                val msg = Message.obtain(null, OBSERVER_REQUEST_LAST_RECEIVED_DATA)
+                homeMessenger?.send(msg)
+            }
+
             OBSERVABLE_STATE_LOADING -> {
                 disableViews()
             }
@@ -698,6 +818,15 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                     observableGrantPermissionSuccessAction(msg.obj as String)
                 }
 
+                OBSERVABLE_SEND_DATA_SUCCESS -> {
+                    val dataModel = jsonConverter.convertJsonStringToObject(
+                        msg.obj as String,
+                        DataModel::class.java
+                    ) as DataModel
+
+                    observableSendDataSuccessAction(dataModel)
+                }
+
 
                 OBSERVER_CONNECTING -> {
                     observerConnectingAction()
@@ -733,6 +862,30 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
                 OBSERVER_DISCONNECT_ALL_TARGETS -> {
                     observerDisconnectAllTargetAction()
+                }
+
+                OBSERVER_RECEIVE_DATA -> {
+                    observerReceiveDataAction(msg.obj as DataModel)
+                }
+
+                OBSERVER_LAST_RECEIVED_DATA -> {
+                    if (marker == null) {
+                        val lastReceivedData = msg.obj as DataModel
+                        val markerIcon = getTargetMarkerIcon(lastReceivedData.targetUsername)
+                        binding.map.moveCamera(
+                            LatLng(
+                                lastReceivedData.latitude,
+                                lastReceivedData.longitude
+                            ), 2f
+                        )
+                        marker = createMarker(
+                            LatLng(
+                                lastReceivedData.latitude,
+                                lastReceivedData.longitude
+                            ), markerIcon
+                        )
+                        binding.map.addMarker(marker)
+                    }
                 }
 
                 else -> super.handleMessage(msg)

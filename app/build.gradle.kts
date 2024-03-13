@@ -90,4 +90,13 @@ dependencies {
 
     // webrtc
     implementation(project(":webrtc"))
+
+    // play-services-location
+    val play_services_location_version = "21.2.0"
+    implementation("com.google.android.gms:play-services-location:$play_services_location_version")
+
+    // Neshan
+    implementation("neshan-android-sdk:mobile-sdk:1.0.3")
+    implementation("neshan-android-sdk:services-sdk:1.0.0")
+    implementation("neshan-android-sdk:common-sdk:0.0.3")
 }

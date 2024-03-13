@@ -97,11 +97,24 @@ class TrackUserBottomSheet(
             chip.isChecked = false
             chip.isCheckable = true
             chip.setOnCheckedChangeListener { _, isChecked ->
-                chip.isCloseIconVisible = !isChecked
-                if (isChecked)
-                    selectedChips.add(chip.text.toString())
-                else
+                if (isChecked) {
+                    if (selectedChips.size < 1) {
+                        chip.isCloseIconVisible = false
+                        chip.isCheckedIconVisible = true
+                        selectedChips.add(chip.text.toString())
+                    } else {
+                        chip.isCheckedIconVisible = false
+                        chip.isChecked = false
+                        showError(
+                            this,
+                            "You can choose one target only."
+                        )
+                    }
+                } else {
+                    chip.isCloseIconVisible = true
+                    chip.isCheckedIconVisible = false
                     selectedChips.remove(chip.text.toString())
+                }
             }
             chip.setOnCloseIconClickListener {
                 showSimpleDialog(
@@ -153,6 +166,7 @@ class TrackUserBottomSheet(
             val target = TargetModel(
                 binding.nameEdt.text.toString().ifEmpty { binding.targetEdt.text.toString() },
                 binding.targetEdt.text.toString(),
+                R.drawable.marker10,
                 permission
             )
 
