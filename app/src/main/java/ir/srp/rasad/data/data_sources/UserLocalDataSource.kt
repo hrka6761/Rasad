@@ -30,7 +30,7 @@ class UserLocalDataSource @Inject constructor(
         editor.apply()
     }
 
-    suspend fun loadBoolean(preferenceKey: String, defaultValue: Boolean): Boolean =
+    fun loadBoolean(preferenceKey: String, defaultValue: Boolean): Boolean =
         sharedPreferences.getBoolean(preferenceKey, defaultValue)
 
     suspend fun loadInteger(preferenceKey: String, defaultValue: Int): Int =

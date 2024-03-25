@@ -25,7 +25,7 @@ class LocalUserDataRepoImpl @Inject constructor(
     override suspend fun saveUserLoginState(state: Boolean) =
         userLocalDataSource.saveBoolean(USER_STATE_PREFERENCE_KEY, state)
 
-    override suspend fun loadUserLoginState() =
+    override fun loadUserLoginState() =
         userLocalDataSource.loadBoolean(USER_STATE_PREFERENCE_KEY, false)
 
     override suspend fun saveUserAccountInfo(userAccountInfo: UserModel) =

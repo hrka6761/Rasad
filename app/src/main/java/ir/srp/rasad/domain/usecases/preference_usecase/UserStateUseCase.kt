@@ -7,5 +7,5 @@ class UserStateUseCase @Inject constructor(private val localUserDataRepo: LocalU
 
     suspend fun setUserLoginState(state: Boolean) = localUserDataRepo.saveUserLoginState(state)
 
-    suspend fun getUserLoginState(): Boolean = localUserDataRepo.loadUserLoginState()
+    fun getUserLoginState(): Boolean = localUserDataRepo.loadUserLoginState()
 }
