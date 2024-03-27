@@ -13,7 +13,7 @@
     <string name="btn_txt_update">Update %1$s</string>
     <string name="btn_txt_track_me">Track me</string>
     <string name="btn_txt_track_other">Track other</string>
-    <string name="btn_txt_stop_track">Track other</string>
+    <string name="btn_txt_stop_track">Stop track</string>
     <string name="btn_txt_positive_dialog">OK</string>
     <string name="btn_txt_negative_dialog">Cancel</string>
     <string name="btn_send_request">Request</string>

@@ -453,15 +453,13 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     private fun observableConnectingAction() {
         isServiceStarted = true
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.orange))
+        binding.onOffFab.setImageResource(R.drawable.powering)
     }
 
     private fun observableConnectionFailAction() {
         isServiceStarted = false
         enableViews()
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+        binding.onOffFab.setImageResource(R.drawable.power_off)
         showError(this, getString(R.string.observable_connect_fail_msg))
     }
 
@@ -469,23 +467,20 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         isObservableLogIn = true
         enableViews()
         disableObserver()
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
+        binding.onOffFab.setImageResource(R.drawable.power_on)
     }
 
     private fun observableLogInFailAction() {
         isServiceStarted = false
         enableViews()
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+        binding.onOffFab.setImageResource(R.drawable.power_off)
         showError(this, getString(R.string.observable_login_fail_msg))
     }
 
     private fun observableLogOutSuccessAction() {
         isServiceStarted = false
         isObservableLogIn = false
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+        binding.onOffFab.setImageResource(R.drawable.power_off)
         binding.trackersContainer.visibility = View.GONE
         enableViews()
         enableObserver()
@@ -691,8 +686,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         binding.waitingTxt.text = getString(R.string.txt_waiting)
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.addMemberFab.text = getString(R.string.btn_txt_track_other)
-        binding.onOffFab.backgroundTintList =
-            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+        binding.onOffFab.setImageResource(R.drawable.power_off)
         binding.trackersContainer.visibility = View.GONE
         enableObservable()
         enableObserver()
@@ -816,12 +810,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 OBSERVABLE_LOGIN_STATE -> {
                     isObservableLogIn = msg.obj as Boolean
                     if (isObservableLogIn) {
-                        binding.onOffFab.backgroundTintList =
-                            ColorStateList.valueOf(requireContext().resources.getColor(R.color.green))
+                        binding.onOffFab.setImageResource(R.drawable.power_on)
                         disableObserver()
                     } else
-                        binding.onOffFab.backgroundTintList =
-                            ColorStateList.valueOf(requireContext().resources.getColor(R.color.red))
+                        binding.onOffFab.setImageResource(R.drawable.power_off)
                 }
 
                 OBSERVER_LOGIN_STATE -> {

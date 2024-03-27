@@ -17,8 +17,8 @@
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/settings_img"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_margin="16dp"
         android:src="@drawable/settings"
         app:layout_constraintEnd_toEndOf="parent"
@@ -28,15 +28,15 @@
         android:id="@+id/trackers_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="12dp"
         android:background="@drawable/boarder"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="4dp"
         android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/settings_img">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txt_track_me">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/trackers_img"
@@ -51,48 +51,45 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="match_parent"
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/on_off_fab"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/on_off_fab_content_description"
+        android:src="@drawable/power_off"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/txt_track_me"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="2dp"
+        android:background="@drawable/track_me_text_bg"
+        android:paddingStart="4dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="2dp"
+        android:text="@string/btn_txt_track_me"
+        android:textColor="@color/white"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/on_off_fab" />
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/add_member_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:contentDescription="@string/fab_add_member_content_description"
+        android:text="@string/btn_txt_track_other"
+        app:icon="@drawable/add"
+        app:iconGravity="textStart"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/on_off_fab"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="4dp"
-            android:layout_marginBottom="8dp"
-            android:layout_weight="0.5"
-            android:backgroundTint="@color/red"
-            android:contentDescription="@string/on_off_fab_content_description"
-            android:text="@string/btn_txt_track_me"
-            android:textSize="16sp"
-            app:icon="@drawable/power"
-            app:iconGravity="textStart"
-            app:pressedTranslationZ="20dp" />
-
-        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/add_member_fab"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
-            android:layout_weight="0.5"
-            android:contentDescription="@string/fab_add_member_content_description"
-            android:text="@string/btn_txt_track_other"
-            android:textSize="16sp"
-            app:icon="@drawable/add"
-            app:iconGravity="textStart"
-            app:pressedTranslationZ="20dp" />
-
-    </LinearLayout>
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/progress_bar"
