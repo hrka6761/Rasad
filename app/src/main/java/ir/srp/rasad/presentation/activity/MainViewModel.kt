@@ -2,7 +2,7 @@ package ir.srp.rasad.presentation.activity
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import ir.srp.rasad.domain.usecases.preference_usecase.UserStateUseCase
+import ir.srp.rasad.domain.usecases.preference_usecases.UserStateUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import javax.inject.Inject
 import javax.inject.Named

@@ -27,7 +27,6 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
-import ir.srp.rasad.core.Constants
 import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
@@ -89,9 +88,9 @@ import ir.srp.rasad.domain.models.DataModel
 import ir.srp.rasad.domain.models.ErrorDataModel
 import ir.srp.rasad.domain.models.TargetModel
 import ir.srp.rasad.domain.models.WebsocketDataModel
-import ir.srp.rasad.domain.usecases.preference_usecase.UserInfoUseCase
-import ir.srp.rasad.domain.usecases.websocket_usecase.TransferWebsocketDataUseCase
-import ir.srp.rasad.domain.usecases.websocket_usecase.WebSocketConnectionUseCase
+import ir.srp.rasad.domain.usecases.preference_usecases.UserInfoUseCase
+import ir.srp.rasad.domain.usecases.track_usecases.TransferTrackDataUseCase
+import ir.srp.rasad.domain.usecases.track_usecases.TrackConnectionUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -116,10 +115,10 @@ class MainService : Service() {
     lateinit var io: CoroutineDispatcher
 
     @Inject
-    lateinit var webSocketConnectionUseCase: WebSocketConnectionUseCase
+    lateinit var trackConnectionUseCase: TrackConnectionUseCase
 
     @Inject
-    lateinit var transferWebsocketDataUseCase: TransferWebsocketDataUseCase
+    lateinit var transferTrackDataUseCase: TransferTrackDataUseCase
 
     @Inject
     lateinit var userInfoUseCase: UserInfoUseCase
@@ -172,7 +171,7 @@ class MainService : Service() {
     @RequiresApi(S)
     override fun onBind(intent: Intent?): IBinder? {
         CoroutineScope(io).launch {
-            transferWebsocketDataUseCase.receiveData(
+            transferTrackDataUseCase.receiveData(
                 onReceiveTextMessage = { text -> onReceiveTextMessage(text) },
                 onReceiveBinaryMessage = null
             )
@@ -445,7 +444,7 @@ class MainService : Service() {
 
     private fun disconnectServer() {
         CoroutineScope(io).launch {
-            webSocketConnectionUseCase.removeChannel(
+            trackConnectionUseCase.removeChannel(
                 onClosingConnection = null,
                 onClosedConnection = null
             )
@@ -527,7 +526,7 @@ class MainService : Service() {
     @RequiresApi(S)
     private fun connectObservableToServer() {
         CoroutineScope(io).launch {
-            webSocketConnectionUseCase.createChannel(
+            trackConnectionUseCase.createChannel(
                 url = WEBSOCKET_URL,
                 successCallback = { observableConnectSuccessAction() },
                 failCallback = { _, _ -> observableConnectFailAction() },
@@ -542,7 +541,7 @@ class MainService : Service() {
     @RequiresApi(S)
     private fun logOutObservable() {
         CoroutineScope(io).launch {
-            transferWebsocketDataUseCase.sendData(
+            transferTrackDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.LogOutObservable,
                     username = username,
@@ -564,7 +563,7 @@ class MainService : Service() {
     @RequiresApi(S)
     private fun loginObservable() {
         CoroutineScope(io).launch {
-            transferWebsocketDataUseCase.sendData(
+            transferTrackDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.LogInObservable,
                     username = username,
@@ -694,7 +693,7 @@ class MainService : Service() {
     private fun observableSendDenyData(target: String) {
         CoroutineScope(io).launch {
             sendSimpleMessageToHomeFragment(OBSERVABLE_SENDING_PERMISSION_RESPONSE)
-            transferWebsocketDataUseCase.sendData(
+            transferTrackDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.Deny,
                     username = username,
@@ -712,7 +711,7 @@ class MainService : Service() {
     private fun observableSendGrantData(target: String) {
         CoroutineScope(io).launch {
             sendSimpleMessageToHomeFragment(OBSERVABLE_SENDING_PERMISSION_RESPONSE)
-            transferWebsocketDataUseCase.sendData(
+            transferTrackDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.Grant,
                     username = username,
@@ -765,7 +764,7 @@ class MainService : Service() {
 
                     CoroutineScope(io).launch {
                         if (observableTargets.size > 0) {
-                            transferWebsocketDataUseCase.sendData(
+                            transferTrackDataUseCase.sendData(
                                 data = WebsocketDataModel(
                                     type = WebSocketDataType.Data,
                                     username = username,
@@ -798,7 +797,7 @@ class MainService : Service() {
         val targetsUserName =
             observerTargets.map { targetModel -> targetModel.username }.toTypedArray()
         CoroutineScope(io).launch {
-            transferWebsocketDataUseCase.sendData(
+            transferTrackDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.LogOutObserver,
                     username = username,
@@ -814,7 +813,7 @@ class MainService : Service() {
     private fun connectObserverToServer() {
         sendSimpleMessageToHomeFragment(OBSERVER_CONNECTING)
         CoroutineScope(io).launch {
-            webSocketConnectionUseCase.createChannel(
+            trackConnectionUseCase.createChannel(
                 url = WEBSOCKET_URL,
                 successCallback = { observerConnectSuccessAction() },
                 failCallback = { _, _ -> observerConnectFailAction() },
@@ -851,7 +850,7 @@ class MainService : Service() {
     @RequiresApi(S)
     private fun loginObserver() {
         CoroutineScope(io).launch {
-            transferWebsocketDataUseCase.sendData(
+            transferTrackDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.LogInObserver,
                     username = username,
@@ -885,7 +884,7 @@ class MainService : Service() {
 
         CoroutineScope(io).launch {
             sendSimpleMessageToHomeFragment(OBSERVER_SENDING_REQUEST_DATA)
-            transferWebsocketDataUseCase.sendData(
+            transferTrackDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.RequestData,
                     username = username,

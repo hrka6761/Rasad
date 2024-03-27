@@ -5,8 +5,8 @@ import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
 import ir.srp.rasad.core.errors.Error
 import ir.srp.rasad.core.utils.MessageViewer
-import ir.srp.rasad.domain.usecases.preference_usecase.UserInfoUseCase
-import ir.srp.rasad.domain.usecases.preference_usecase.UserStateUseCase
+import ir.srp.rasad.domain.usecases.preference_usecases.UserInfoUseCase
+import ir.srp.rasad.domain.usecases.preference_usecases.UserStateUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

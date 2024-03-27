@@ -1,10 +1,10 @@
-package ir.srp.rasad.domain.usecases.websocket_usecase
+package ir.srp.rasad.domain.usecases.track_usecases
 
-import ir.srp.rasad.domain.repositories.UserRepo
+import ir.srp.rasad.domain.repositories.TrackRepo
 import okhttp3.Response
 import javax.inject.Inject
 
-class WebSocketConnectionUseCase @Inject constructor(private val userRepo: UserRepo) {
+class TrackConnectionUseCase @Inject constructor(private val trackRepo: TrackRepo) {
 
     suspend fun createChannel(
         url: String,
@@ -12,7 +12,7 @@ class WebSocketConnectionUseCase @Inject constructor(private val userRepo: UserR
         failCallback: ((t: Throwable, response: Response?) -> Unit)?,
         serverDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
         clientDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
-    ) = userRepo.createChannel(
+    ) = trackRepo.createChannel(
         url,
         successCallback,
         failCallback,
@@ -23,7 +23,7 @@ class WebSocketConnectionUseCase @Inject constructor(private val userRepo: UserR
     suspend fun removeChannel(
         onClosingConnection: ((code: Int, reason: String) -> Unit)?,
         onClosedConnection: ((code: Int, reason: String) -> Unit)?,
-    ) = userRepo.removeChannel(onClosingConnection, onClosedConnection)
+    ) = trackRepo.removeChannel(onClosingConnection, onClosedConnection)
 
-    fun isChannelExist() = userRepo.isChannelExist()
+    fun isChannelExist() = trackRepo.isChannelExist()
 }

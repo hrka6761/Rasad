@@ -17,7 +17,6 @@ import kotlin.Exception
 
 class UserRepoImpl @Inject constructor(
     private val userApi: UserApi,
-    private val userWebsocket: UserWebsocket,
     private val errorDetector: ErrorDetector,
 ) : UserRepo {
 
@@ -98,43 +97,4 @@ class UserRepoImpl @Inject constructor(
             Resource.Error(retrofitError)
         }
     }
-
-    override suspend fun createChannel(
-        url: String,
-        successCallback: ((response: Response) -> Unit)?,
-        failCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        serverDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        clientDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
-    ) {
-        userWebsocket.createConnection(
-            url,
-            successCallback,
-            failCallback,
-            serverDisconnectCallback,
-            clientDisconnectCallback
-        )
-    }
-
-    override suspend fun removeChannel(
-        onClosingConnection: ((code: Int, reason: String) -> Unit)?,
-        onClosedConnection: ((code: Int, reason: String) -> Unit)?,
-    ) {
-        userWebsocket.removeConnection(onClosingConnection, onClosedConnection)
-    }
-
-    override suspend fun senData(
-        data: WebsocketDataModel,
-        onSendMessageFail: ((t: Throwable, response: Response?) -> Unit)?,
-    ) {
-        userWebsocket.sendData(data, onSendMessageFail)
-    }
-
-    override suspend fun receiveData(
-        onReceiveTextMessage: ((text: String) -> Unit)?,
-        onReceiveBinaryMessage: ((bytes: ByteString) -> Unit)?,
-    ) {
-        userWebsocket.receiveData(onReceiveTextMessage, onReceiveBinaryMessage)
-    }
-
-    override fun isChannelExist(): Boolean = userWebsocket.isConnected()
 }

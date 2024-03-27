@@ -6,9 +6,11 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import ir.srp.rasad.data.repositories.LocalUserDataRepoImpl
 import ir.srp.rasad.data.repositories.ObserverRepoImpl
+import ir.srp.rasad.data.repositories.TrackRepoImpl
 import ir.srp.rasad.data.repositories.UserRepoImpl
 import ir.srp.rasad.domain.repositories.LocalUserDataRepo
 import ir.srp.rasad.domain.repositories.ObserverRepo
+import ir.srp.rasad.domain.repositories.TrackRepo
 import ir.srp.rasad.domain.repositories.UserRepo
 import javax.inject.Singleton
 
@@ -27,4 +29,8 @@ interface RepoModule {
     @Singleton
     @Binds
     fun bindObserverRepo(observerRepoImpl: ObserverRepoImpl): ObserverRepo
+
+    @Singleton
+    @Binds
+    fun bindTrackRepo(trackRepoImpl: TrackRepoImpl): TrackRepo
 }

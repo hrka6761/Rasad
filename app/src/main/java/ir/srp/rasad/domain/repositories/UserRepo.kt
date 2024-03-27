@@ -15,28 +15,4 @@ interface UserRepo {
     suspend fun registerUser(userModel: UserModel): Resource<UserModel?>
     suspend fun editUsername(token: String, userModel: UserModel): Resource<UserModel?>
     suspend fun editEmail(token: String, userModel: UserModel): Resource<UserModel?>
-    suspend fun createChannel(
-        url: String,
-        successCallback: ((response: Response) -> Unit)?,
-        failCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        serverDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        clientDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
-    )
-
-    suspend fun removeChannel(
-        onClosingConnection: ((code: Int, reason: String) -> Unit)?,
-        onClosedConnection: ((code: Int, reason: String) -> Unit)?,
-    )
-
-    suspend fun senData(
-        data: WebsocketDataModel,
-        onSendMessageFail: ((t: Throwable, response: Response?) -> Unit)?,
-    )
-
-    suspend fun receiveData(
-        onReceiveTextMessage: ((text: String) -> Unit)?,
-        onReceiveBinaryMessage: ((bytes: ByteString) -> Unit)?,
-    )
-
-    fun isChannelExist(): Boolean
 }

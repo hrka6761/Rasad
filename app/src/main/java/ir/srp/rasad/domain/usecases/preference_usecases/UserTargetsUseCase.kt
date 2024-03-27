@@ -1,4 +1,4 @@
-package ir.srp.rasad.domain.usecases.preference_usecase
+package ir.srp.rasad.domain.usecases.preference_usecases
 
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.domain.models.TargetModel

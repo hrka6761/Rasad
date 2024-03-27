@@ -10,7 +10,7 @@ import ir.srp.rasad.domain.models.UserModel
 import ir.srp.rasad.domain.usecases.observer_usecases.AddObserverUseCase
 import ir.srp.rasad.domain.usecases.observer_usecases.DeleteObserverUseCase
 import ir.srp.rasad.domain.usecases.observer_usecases.GetObserversUseCase
-import ir.srp.rasad.domain.usecases.preference_usecase.UserInfoUseCase
+import ir.srp.rasad.domain.usecases.preference_usecases.UserInfoUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
