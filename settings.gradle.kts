@@ -18,4 +18,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Rasad"
 include(":app")
-include(":webrtc")

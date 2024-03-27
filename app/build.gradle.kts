@@ -88,9 +88,6 @@ dependencies {
     val gson_version = "2.10.1"
     implementation("com.google.code.gson:gson:$gson_version")
 
-    // webrtc
-    implementation(project(":webrtc"))
-
     // play-services-location
     val play_services_location_version = "21.2.0"
     implementation("com.google.android.gms:play-services-location:$play_services_location_version")
