@@ -22,6 +22,7 @@
 
     <string name="txt_login_toolbar_title">Login</string>
     <string name="txt_settings_toolbar_title">Settings</string>
+    <string name="txt_observers_toolbar_title">Permitted observers</string>
     <string name="txt_profile_toolbar_title">Profile</string>
     <string name="txt_otp_toolbar_title">Authentication</string>
     <string name="txt_register_toolbar_title">Register</string>
@@ -32,6 +33,7 @@
     <string name="txt_send_otp_desc">* Enter the sent OTP.</string>
     <string name="txt_register_desc">* Enter username and email.\n* Username is require and must be unique.\n* Email is optional.</string>
     <string name="txt_profile">Edit Profile</string>
+    <string name="txt_observers">Permitted observers</string>
     <string name="txt_account_title">Account</string>
     <string name="txt_no_email">No email</string>
     <string name="txt_email_title">Email</string>
@@ -40,6 +42,8 @@
     <string name="txt_edit_profile_bottom_sheet_desc">Please insert your new %1$s</string>
     <string name="txt_waiting">Please wait …</string>
     <string name="txt_response_waiting">Waiting for targets responses …</string>
+    <string name="txt_loading_error">Loading Error !!!</string>
+    <string name="txt_no_permitted_observer">No permitted observer</string>
 
     <string name="snackbar_incorrect_mobile_number">The mobile number is not correct.</string>
     <string name="snackbar_incorrect_otp">The code is not correct.</string>
@@ -87,4 +91,5 @@
     <string name="observer_receive_data_msg">you are tracking %1$s !!!!</string>
 
     <string name="location">location</string>
+
 </resources>

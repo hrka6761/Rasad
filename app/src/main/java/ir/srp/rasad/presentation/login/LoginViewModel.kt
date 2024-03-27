@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import ir.srp.rasad.core.Resource
-import ir.srp.rasad.domain.usecases.api_usecases.OTPUseCase
+import ir.srp.rasad.domain.usecases.user_usecases.OTPUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

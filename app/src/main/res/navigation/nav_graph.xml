@@ -66,24 +66,36 @@
         android:id="@+id/settingsFragment"
         android:name="ir.srp.rasad.presentation.settings.SettingsFragment"
         android:label="fragment_settings"
-        tools:layout="@layout/fragment_settings" >
+        tools:layout="@layout/fragment_settings">
         <action
             android:id="@+id/action_settingsFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
         <action
             android:id="@+id/action_settingsFragment_to_profileFragment"
             app:destination="@id/profileFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_observersFragment"
+            app:destination="@id/observersFragment" />
     </fragment>
     <fragment
         android:id="@+id/profileFragment"
         android:name="ir.srp.rasad.presentation.profile.ProfileFragment"
         android:label="fragment_profile"
-        tools:layout="@layout/fragment_profile" >
+        tools:layout="@layout/fragment_profile">
         <action
             android:id="@+id/action_profileFragment_to_settingsFragment"
             app:destination="@id/settingsFragment" />
         <action
             android:id="@+id/action_profileFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/observersFragment"
+        android:name="ir.srp.rasad.presentation.observers.ObserversFragment"
+        android:label="fragment_observers"
+        tools:layout="@layout/fragment_observers">
+        <action
+            android:id="@+id/action_observersFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
     </fragment>
 </navigation>

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".presentation.settings.SettingsFragment">
+    tools:context=".presentation.observers.ObserversFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/toolbar"
@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:text="@string/txt_settings_toolbar_title"
+            android:text="@string/txt_observers_toolbar_title"
             android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -39,89 +39,85 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/profile"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_margin="16dp"
+        android:layout_height="0dp"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar">
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/profile_img_icon"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:padding="12dp"
-            android:src="@drawable/profile"
-            app:layout_constraintBottom_toBottomOf="parent"
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/add_observer_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="Add"
+        app:icon="@drawable/add"
+        app:iconGravity="textStart"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/no_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/no_list_img"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/empty"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/profile_txt"
+            android:id="@+id/no_list_txt"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginStart="28dp"
-            android:gravity="center|start"
-            android:padding="8dp"
-            android:text="@string/txt_profile"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toEndOf="@+id/profile_img_icon" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/profile_img_arrow"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:padding="12dp"
-            android:src="@drawable/forward"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:text="@string/txt_no_permitted_observer"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/no_list_img" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/observers"
+        android:id="@+id/progress_bar"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_margin="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile">
+        android:layout_height="match_parent"
+        android:background="#B3BFBFBF"
+        android:visibility="gone">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/observers_img_icon"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:padding="12dp"
-            android:src="@drawable/permitted_observers"
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/observers_txt"
+            android:id="@+id/waiting_txt"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginStart="28dp"
-            android:gravity="center|start"
-            android:padding="8dp"
-            android:text="@string/txt_observers"
-            android:textSize="20sp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/txt_waiting"
             android:textStyle="bold"
-            app:layout_constraintStart_toEndOf="@+id/observers_img_icon" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/observers_img_arrow"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:padding="12dp"
-            android:src="@drawable/forward"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/progressBar" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

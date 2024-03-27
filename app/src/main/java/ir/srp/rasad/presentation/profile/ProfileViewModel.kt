@@ -6,8 +6,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.domain.models.UserModel
 import ir.srp.rasad.domain.usecases.preference_usecase.UserInfoUseCase
-import ir.srp.rasad.domain.usecases.api_usecases.EditEmailUseCase
-import ir.srp.rasad.domain.usecases.api_usecases.EditUserNameUseCase
+import ir.srp.rasad.domain.usecases.user_usecases.EditEmailUseCase
+import ir.srp.rasad.domain.usecases.user_usecases.EditUserNameUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

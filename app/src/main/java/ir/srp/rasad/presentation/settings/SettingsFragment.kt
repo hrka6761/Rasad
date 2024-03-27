@@ -39,7 +39,16 @@ class SettingsFragment : BaseFragment() {
 
     private fun initialize() {
         initProfileField()
+        initPermittedObserversField()
         initToolbarBackButton()
+    }
+
+    private fun initPermittedObserversField() {
+        binding.observers.setOnClickListener { onClickPermittedObservers() }
+    }
+
+    private fun onClickPermittedObservers() {
+        navController.navigate(R.id.observersFragment)
     }
 
     private fun initProfileField() {

@@ -1,4 +1,4 @@
-package ir.srp.rasad.domain.usecases.api_usecases
+package ir.srp.rasad.domain.usecases.user_usecases
 
 import ir.srp.rasad.domain.models.LoginDataModel
 import ir.srp.rasad.domain.repositories.UserRepo

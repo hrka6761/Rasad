@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import ir.srp.rasad.core.Constants.HTTP_BASE_URL
+import ir.srp.rasad.data.data_sources.ObserverApi
 import ir.srp.rasad.data.data_sources.UserApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -41,5 +42,11 @@ class APIModule {
 
     @Singleton
     @Provides
-    fun provideUserApi(retrofit: Retrofit): UserApi = retrofit.create(UserApi::class.java)
+    fun provideUserApi(retrofit: Retrofit): UserApi =
+        retrofit.create(UserApi::class.java)
+
+    @Singleton
+    @Provides
+    fun provideObserverApi(retrofit: Retrofit): ObserverApi =
+        retrofit.create(ObserverApi::class.java)
 }
