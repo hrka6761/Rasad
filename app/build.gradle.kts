@@ -16,7 +16,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,41 +56,33 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     // Navigation
-    val nav_version = "2.7.6"
-    implementation("androidx.navigation:navigation-fragment-ktx:$nav_version")
-    implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
-    implementation("androidx.navigation:navigation-dynamic-features-fragment:$nav_version")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.6")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.6")
+    implementation("androidx.navigation:navigation-dynamic-features-fragment:2.7.6")
 
     // Hilt
-    val hilt_version = "2.50"
-    implementation("com.google.dagger:hilt-android:$hilt_version")
-    kapt("com.google.dagger:hilt-android-compiler:$hilt_version")
+    implementation("com.google.dagger:hilt-android:2.50")
+    kapt("com.google.dagger:hilt-android-compiler:2.50")
 
     // Coroutines
-    val coroutines_version = "1.7.3"
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // Retrofit
-    val retrofit_version = "2.9.0"
-    implementation("com.squareup.retrofit2:retrofit:$retrofit_version")
-    implementation("com.squareup.retrofit2:converter-moshi:$retrofit_version")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
 
     // okhttp3
-    val okhttp3_version = "4.12.0"
-    implementation("com.squareup.okhttp3:okhttp:$okhttp3_version")
-    implementation("com.squareup.okhttp3:logging-interceptor:$okhttp3_version")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // PinView
-    val pin_view_version = "v1.5"
-    implementation("com.github.GoodieBag:Pinview:$pin_view_version")
+    implementation("com.github.GoodieBag:Pinview:v1.5")
 
     // Gson
-    val gson_version = "2.10.1"
-    implementation("com.google.code.gson:gson:$gson_version")
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // play-services-location
-    val play_services_location_version = "21.2.0"
-    implementation("com.google.android.gms:play-services-location:$play_services_location_version")
+    implementation("com.google.android.gms:play-services-location:21.2.0")
 
     // Neshan
     implementation("neshan-android-sdk:mobile-sdk:1.0.3")
