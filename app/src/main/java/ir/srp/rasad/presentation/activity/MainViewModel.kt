@@ -9,7 +9,6 @@ import javax.inject.Named
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    @Named("IO") private val io: CoroutineDispatcher,
     private val userStateUseCase: UserStateUseCase,
 ) : ViewModel() {
 

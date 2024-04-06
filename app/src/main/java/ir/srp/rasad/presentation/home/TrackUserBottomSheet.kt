@@ -17,7 +17,7 @@ import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_1_H
 import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_30_M
 import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_3_H
 import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_5_M
-import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
+import ir.srp.rasad.core.Constants.TARGETS_KEY
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
 import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.utils.TargetPermissionType
@@ -41,9 +41,9 @@ class TrackUserBottomSheet(
         super.onCreate(savedInstanceState)
 
         val args = if (SDK_INT >= TIRAMISU)
-            requireArguments().getParcelableArray(TARGETS_PREFERENCE_KEY, TargetModel::class.java)
+            requireArguments().getParcelableArray(TARGETS_KEY, TargetModel::class.java)
         else
-            requireArguments().getParcelableArray(TARGETS_PREFERENCE_KEY)
+            requireArguments().getParcelableArray(TARGETS_KEY)
 
         savedTargets = args as Array<TargetModel>
         savedTargetsSize = savedTargets.size

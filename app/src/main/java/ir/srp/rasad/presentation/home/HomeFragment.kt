@@ -6,7 +6,6 @@ import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Build.VERSION_CODES.O
@@ -53,7 +52,7 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_DISCONNECT_ALL_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECEIVE_REQUEST_PERMISSION
-import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_PERMISSION_DATA
+import ir.srp.rasad.core.Constants.OBSERVABLE_GET_PERMISSION_DATA
 import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVABLE_SENDING_PERMISSION_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVABLE_SEND_DATA_SUCCESS
@@ -77,15 +76,15 @@ import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_RECEIVING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVER_REQUEST_LAST_RECEIVED_DATA
-import ir.srp.rasad.core.Constants.SERVICE_BUNDLE
-import ir.srp.rasad.core.Constants.SERVICE_DATA
+import ir.srp.rasad.core.Constants.SERVICE_BUNDLE_KEY
+import ir.srp.rasad.core.Constants.SERVICE_DATA_KEY
 import ir.srp.rasad.core.Constants.SERVICE_STATE
-import ir.srp.rasad.core.Constants.SERVICE_TYPE
+import ir.srp.rasad.core.Constants.SERVICE_TYPE_KEY
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
 import ir.srp.rasad.core.Constants.STATE_DISABLE
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
-import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
+import ir.srp.rasad.core.Constants.TARGETS_KEY
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
 import ir.srp.rasad.core.utils.JsonConverter
@@ -109,7 +108,8 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class HomeFragment : BaseFragment(), RequestTargetListener {
 
-    private val TAG = "hamidreza"
+    @Inject
+    lateinit var jsonConverter: JsonConverter
     private lateinit var binding: FragmentHomeBinding
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var permissionManager: PermissionManager
@@ -125,11 +125,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     val trackUserBottomSheet = TrackUserBottomSheet(this)
     private var marker: Marker? = null
     private var permissionDialog: AlertDialog? = null
-    private val observers = mutableListOf<String>()
-    private val observables = mutableListOf<String>()
-
-    @Inject
-    lateinit var jsonConverter: JsonConverter
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -201,7 +196,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                         for (target in savedTargets)
                             targets.add(target)
 
-                        args.putParcelableArray(TARGETS_PREFERENCE_KEY, targets.toTypedArray())
+                        args.putParcelableArray(TARGETS_KEY, targets.toTypedArray())
                         trackUserBottomSheet.arguments = args
                         trackUserBottomSheet.show(
                             requireActivity().supportFragmentManager,
@@ -357,7 +352,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             for (target in savedTargets)
                 targets.add(target)
 
-            args.putParcelableArray(TARGETS_PREFERENCE_KEY, targets.toTypedArray())
+            args.putParcelableArray(TARGETS_KEY, targets.toTypedArray())
             trackUserBottomSheet.arguments = args
             trackUserBottomSheet.show(
                 requireActivity().supportFragmentManager,
@@ -385,9 +380,9 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private fun startService(type: String, data: Any? = null) {
         val intent = Intent(requireContext(), MainService::class.java)
         val bundle = Bundle()
-        bundle.putString(SERVICE_TYPE, type)
-        data?.let { bundle.putParcelableArray(SERVICE_DATA, data as Array<Parcelable>) }
-        intent.putExtra(SERVICE_BUNDLE, bundle)
+        bundle.putString(SERVICE_TYPE_KEY, type)
+        data?.let { bundle.putParcelableArray(SERVICE_DATA_KEY, data as Array<Parcelable>) }
+        intent.putExtra(SERVICE_BUNDLE_KEY, bundle)
         requireContext().startForegroundService(intent)
     }
 
@@ -741,7 +736,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             OBSERVABLE_STATE_READY -> {}
             OBSERVABLE_STATE_PERMISSION_REQUEST -> {
                 val requestPermissionDataMsg =
-                    Message.obtain(null, OBSERVABLE_REQUEST_PERMISSION_DATA)
+                    Message.obtain(null, OBSERVABLE_GET_PERMISSION_DATA)
                 homeMessenger?.send(requestPermissionDataMsg)
                 binding.cancelWaitingBtn.visibility = View.GONE
                 binding.waitingTxt.text = getString(R.string.txt_waiting)

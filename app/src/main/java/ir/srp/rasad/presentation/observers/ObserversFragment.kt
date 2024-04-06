@@ -27,6 +27,7 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
     private lateinit var userData: UserModel
     private var clickedObserver: PermittedObserversModel? = null
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         adapter = ObserversAdapter(requireContext(), this@ObserversFragment)
@@ -34,7 +35,7 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         binding = FragmentObserversBinding.inflate(inflater, container, false)
 

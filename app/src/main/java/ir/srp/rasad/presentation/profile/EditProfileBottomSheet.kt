@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import ir.srp.rasad.R
-import ir.srp.rasad.core.Constants.EDIT_PROFILE_ARG_KEY
+import ir.srp.rasad.core.Constants.EDIT_PROFILE_KEY
 import ir.srp.rasad.core.Constants.USERNAME_ARG_VALUE
 import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.utils.Validation.isUsernameValid
@@ -54,18 +54,18 @@ class EditProfileBottomSheet(
     private fun initDescription() {
         binding.editDescTxt.text = getString(
             R.string.txt_edit_profile_bottom_sheet_desc,
-            args.getString(EDIT_PROFILE_ARG_KEY)
+            args.getString(EDIT_PROFILE_KEY)
         )
     }
 
     private fun initEditText() {
-        binding.fieldEdtl.hint = args.getString(EDIT_PROFILE_ARG_KEY)
+        binding.fieldEdtl.hint = args.getString(EDIT_PROFILE_KEY)
     }
 
     @SuppressLint("StringFormatInvalid")
     private fun initButton() {
         binding.updateBtn.text =
-            getString(R.string.btn_txt_update, args.getString(EDIT_PROFILE_ARG_KEY))
+            getString(R.string.btn_txt_update, args.getString(EDIT_PROFILE_KEY))
 
         binding.updateBtn.setOnClickListener { onCLickUpdate() }
     }
@@ -76,12 +76,12 @@ class EditProfileBottomSheet(
         if (fieldText.isEmpty()) {
             showError(
                 this,
-                getString(R.string.snackbar_empty_field, args.getString(EDIT_PROFILE_ARG_KEY))
+                getString(R.string.snackbar_empty_field, args.getString(EDIT_PROFILE_KEY))
             )
             return
         }
 
-        if (args.getString(EDIT_PROFILE_ARG_KEY) == USERNAME_ARG_VALUE) {
+        if (args.getString(EDIT_PROFILE_KEY) == USERNAME_ARG_VALUE) {
             if (isUsernameValid(fieldText)) {
                 binding.fieldEdt.text?.clear()
                 listener.onEditUsername(fieldText)

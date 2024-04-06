@@ -1,17 +1,13 @@
 package ir.srp.rasad.data.repositories
 
-import ir.srp.rasad.core.Constants.TOKEN_HEADER_KEY
+import ir.srp.rasad.core.Constants.HEADER_TOKEN_KEY
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.errors.ErrorDetector
 import ir.srp.rasad.data.data_sources.UserApi
-import ir.srp.rasad.data.data_sources.UserWebsocket
 import ir.srp.rasad.domain.models.LoginDataModel
 import ir.srp.rasad.domain.models.UserModel
-import ir.srp.rasad.domain.models.WebsocketDataModel
 import ir.srp.rasad.domain.repositories.UserRepo
-import okhttp3.Response
 import okhttp3.ResponseBody
-import okio.ByteString
 import javax.inject.Inject
 import kotlin.Exception
 
@@ -41,7 +37,7 @@ class UserRepoImpl @Inject constructor(
             val response = userApi.login(loginDataModel)
             if (response.isSuccessful) {
                 (response.body() as UserModel).token =
-                    response.headers()[TOKEN_HEADER_KEY].toString()
+                    response.headers()[HEADER_TOKEN_KEY].toString()
                 Resource.Success(response.body())
             } else
                 errorDetector[response]
@@ -56,7 +52,7 @@ class UserRepoImpl @Inject constructor(
             val response = userApi.register(userModel)
             if (response.isSuccessful) {
                 (response.body() as UserModel).token =
-                    response.headers()[TOKEN_HEADER_KEY].toString()
+                    response.headers()[HEADER_TOKEN_KEY].toString()
                 Resource.Success(response.body())
             } else
                 errorDetector[response]
@@ -72,7 +68,7 @@ class UserRepoImpl @Inject constructor(
                 userApi.updateUsername(token, userModel)
             if (response.isSuccessful) {
                 (response.body() as UserModel).token =
-                    response.headers()[TOKEN_HEADER_KEY].toString()
+                    response.headers()[HEADER_TOKEN_KEY].toString()
                 Resource.Success(response.body())
             } else
                 errorDetector[response]
@@ -88,7 +84,7 @@ class UserRepoImpl @Inject constructor(
                 userApi.updateEmail(token, userModel)
             if (response.isSuccessful) {
                 (response.body() as UserModel).token =
-                    response.headers()[TOKEN_HEADER_KEY].toString()
+                    response.headers()[HEADER_TOKEN_KEY].toString()
                 Resource.Success(response.body())
             } else
                 errorDetector[response]

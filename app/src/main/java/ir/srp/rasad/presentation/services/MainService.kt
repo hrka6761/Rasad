@@ -49,7 +49,7 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECEIVE_REQUEST_PERMISSION
-import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_PERMISSION_DATA
+import ir.srp.rasad.core.Constants.OBSERVABLE_GET_PERMISSION_DATA
 import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVABLE_SENDING_PERMISSION_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_LOADING
@@ -72,10 +72,10 @@ import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_RECEIVING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVER_REQUEST_LAST_RECEIVED_DATA
-import ir.srp.rasad.core.Constants.SERVICE_BUNDLE
-import ir.srp.rasad.core.Constants.SERVICE_DATA
+import ir.srp.rasad.core.Constants.SERVICE_BUNDLE_KEY
+import ir.srp.rasad.core.Constants.SERVICE_DATA_KEY
 import ir.srp.rasad.core.Constants.SERVICE_STATE
-import ir.srp.rasad.core.Constants.SERVICE_TYPE
+import ir.srp.rasad.core.Constants.SERVICE_TYPE_KEY
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
 import ir.srp.rasad.core.Constants.STATE_DISABLE
@@ -100,13 +100,6 @@ import javax.inject.Named
 @AndroidEntryPoint
 class MainService : Service() {
 
-    private val TAG = "hamidreza"
-    private val CHANNEL_ID = "Rasad"
-    private val NOTIFICATION_ID = 110
-    private lateinit var notificationChannel: NotificationChannel
-    private var serviceMessenger: Messenger? = null
-    private lateinit var homeMessenger: Messenger
-
     @Inject
     lateinit var notificationManager: NotificationManager
 
@@ -125,6 +118,11 @@ class MainService : Service() {
 
     @Inject
     lateinit var jsonConverter: JsonConverter
+    private val CHANNEL_ID = "Rasad"
+    private val NOTIFICATION_ID = 110
+    private lateinit var notificationChannel: NotificationChannel
+    private var serviceMessenger: Messenger? = null
+    private lateinit var homeMessenger: Messenger
     private lateinit var username: String
     private lateinit var userToken: String
     private lateinit var userId: String
@@ -160,7 +158,7 @@ class MainService : Service() {
 
     @RequiresApi(S)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val bundle = intent?.getBundleExtra(SERVICE_BUNDLE)
+        val bundle = intent?.getBundleExtra(SERVICE_BUNDLE_KEY)
         val action = intent?.action
         bundle?.let { handleStartIntentData(it) }
         action?.let { handleAction(action) }
@@ -182,7 +180,7 @@ class MainService : Service() {
 
     @RequiresApi(S)
     private fun handleStartIntentData(bundle: Bundle) {
-        when (bundle.getString(SERVICE_TYPE)) {
+        when (bundle.getString(SERVICE_TYPE_KEY)) {
 
             START_SERVICE_OBSERVABLE -> {
                 ServiceCompat.startForeground(
@@ -205,9 +203,9 @@ class MainService : Service() {
 
             START_SERVICE_OBSERVER -> {
                 val data = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                    bundle.getParcelableArray(SERVICE_DATA, TargetModel::class.java)
+                    bundle.getParcelableArray(SERVICE_DATA_KEY, TargetModel::class.java)
                 else
-                    bundle.getParcelableArray(SERVICE_DATA)
+                    bundle.getParcelableArray(SERVICE_DATA_KEY)
 
                 for (item in data!!) {
                     val target = item as TargetModel
@@ -522,7 +520,7 @@ class MainService : Service() {
     }
 
 
-    // Observable functions ------------------------------------------------------------------------
+    // Observable Actions --------------------------------------------------------------------------
     @RequiresApi(S)
     private fun connectObservableToServer() {
         CoroutineScope(io).launch {
@@ -718,7 +716,7 @@ class MainService : Service() {
                     targets = arrayOf(target),
                     data = requestPermissionData?.data
                 ),
-                onSendMessageFail = { t, _ ->
+                onSendMessageFail = { _, _ ->
                     observableSendMessageFailAction(WebSocketDataType.Grant)
                 }
             )
@@ -791,7 +789,7 @@ class MainService : Service() {
     }
 
 
-    // Observer functions ------------------------------------------------------------------------
+    // Observer Actions ----------------------------------------------------------------------------
     @RequiresApi(S)
     private fun logOutObserver() {
         val targetsUserName =
@@ -1020,7 +1018,7 @@ class MainService : Service() {
                     cancelObservation(getString(R.string.cancel_observe_msg))
                 }
 
-                OBSERVABLE_REQUEST_PERMISSION_DATA -> {
+                OBSERVABLE_GET_PERMISSION_DATA -> {
                     sendSimpleMessageToHomeFragment(
                         OBSERVABLE_RECEIVE_REQUEST_PERMISSION,
                         requestPermissionData

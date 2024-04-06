@@ -1,8 +1,8 @@
 package ir.srp.rasad.data.repositories
 
-import ir.srp.rasad.core.Constants.TARGETS_PREFERENCE_KEY
-import ir.srp.rasad.core.Constants.USER_ACCOUNT_INFO_PREFERENCE_KEY
-import ir.srp.rasad.core.Constants.USER_STATE_PREFERENCE_KEY
+import ir.srp.rasad.core.Constants.TARGETS_KEY
+import ir.srp.rasad.core.Constants.USER_ACCOUNT_INFO_KEY
+import ir.srp.rasad.core.Constants.USER_STATE_KEY
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.errors.local_errors.LoadLocalDataError
 import ir.srp.rasad.core.errors.local_errors.NotFoundTargetError
@@ -23,19 +23,19 @@ class LocalUserDataRepoImpl @Inject constructor(
 ) : LocalUserDataRepo {
 
     override suspend fun saveUserLoginState(state: Boolean) =
-        userLocalDataSource.saveBoolean(USER_STATE_PREFERENCE_KEY, state)
+        userLocalDataSource.saveBoolean(USER_STATE_KEY, state)
 
     override fun loadUserLoginState() =
-        userLocalDataSource.loadBoolean(USER_STATE_PREFERENCE_KEY, false)
+        userLocalDataSource.loadBoolean(USER_STATE_KEY, false)
 
     override suspend fun saveUserAccountInfo(userAccountInfo: UserModel) =
         userLocalDataSource.saveString(
-            USER_ACCOUNT_INFO_PREFERENCE_KEY,
+            USER_ACCOUNT_INFO_KEY,
             jsonConverter.convertObjectToJsonString(userAccountInfo)
         )
 
     override suspend fun loadUserAccountInfo(): Resource<UserModel?> {
-        val userAccountInfo = userLocalDataSource.loadString(USER_ACCOUNT_INFO_PREFERENCE_KEY, null)
+        val userAccountInfo = userLocalDataSource.loadString(USER_ACCOUNT_INFO_KEY, null)
         return if (userAccountInfo != null)
             Resource.Success(
                 jsonConverter.convertJsonStringToObject(
@@ -58,12 +58,12 @@ class LocalUserDataRepoImpl @Inject constructor(
             targetsString.add(targetString)
         }
 
-        userLocalDataSource.saveSet(TARGETS_PREFERENCE_KEY, targetsString)
+        userLocalDataSource.saveSet(TARGETS_KEY, targetsString)
     }
 
     override suspend fun loadUserTargets(): Resource<HashSet<TargetModel>?> {
         val targetsModel = HashSet<TargetModel>()
-        val targetsString = userLocalDataSource.loadSet(TARGETS_PREFERENCE_KEY, null)
+        val targetsString = userLocalDataSource.loadSet(TARGETS_KEY, null)
 
         return if (targetsString != null) {
             for (target in targetsString) {

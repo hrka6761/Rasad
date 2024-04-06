@@ -9,9 +9,9 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
-import ir.srp.rasad.core.Constants.EDIT_PROFILE_ARG_KEY
+import ir.srp.rasad.core.Constants.EDIT_PROFILE_KEY
 import ir.srp.rasad.core.Constants.USERNAME_ARG_VALUE
-import ir.srp.rasad.core.Constants.EMAIL_ARG_VALUE
+import ir.srp.rasad.core.Constants.EMAIL_VALUE
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.utils.MessageViewer.showMessage
 import ir.srp.rasad.databinding.FragmentProfileBinding
@@ -105,7 +105,7 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
 
     private fun onClickUsernameEmail() {
         val args = Bundle()
-        args.putString(EDIT_PROFILE_ARG_KEY, USERNAME_ARG_VALUE)
+        args.putString(EDIT_PROFILE_KEY, USERNAME_ARG_VALUE)
         editProfileBottomSheet.arguments = args
         editProfileBottomSheet.show(
             requireActivity().supportFragmentManager,
@@ -119,7 +119,7 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
 
     private fun onClickEditEmail() {
         val args = Bundle()
-        args.putString(EDIT_PROFILE_ARG_KEY, EMAIL_ARG_VALUE)
+        args.putString(EDIT_PROFILE_KEY, EMAIL_VALUE)
         editProfileBottomSheet.arguments = args
         editProfileBottomSheet.show(
             requireActivity().supportFragmentManager,

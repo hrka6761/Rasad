@@ -1,7 +1,6 @@
 package ir.srp.rasad.core.errors.local_errors
 
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import ir.srp.rasad.core.Constants
 import ir.srp.rasad.core.errors.Error
@@ -17,7 +16,7 @@ class NotFoundTargetError @Inject constructor() : Error {
         val bottomSheet = (fragment as HomeFragment).trackUserBottomSheet
         val args = Bundle()
         val targets = arrayOf<TargetModel>()
-        args.putParcelableArray(Constants.TARGETS_PREFERENCE_KEY, targets)
+        args.putParcelableArray(Constants.TARGETS_KEY, targets)
         bottomSheet.arguments = args
         bottomSheet.show(fragment.requireActivity().supportFragmentManager, bottomSheet.tag)
     }

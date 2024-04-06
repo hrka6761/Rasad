@@ -66,6 +66,7 @@
     <string name="dialog_basic_location_dialog_msg">You need to grant location permission for the app to access your current location.</string>
     <string name="dialog_background_location_dialog_msg">To continue working with the program after closing it, you must set the location access to the highest level.\n\"Allow all the time\"</string>
     <string name="dialog_remove_saved_target_msg">Are you sure to remove %1$s from the targets list.</string>
+    <string name="dialog_delete_observer_permission_msg">Are you sure you want to delete this observer permission ?</string>
 
     <string name="tag_edit_profile_bottom_sheet">edit_profile_dialog</string>
     <string name="fab_add_member_content_description">Add member</string>

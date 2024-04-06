@@ -5,6 +5,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import ir.srp.rasad.R
 import ir.srp.rasad.core.utils.Dialog
 import ir.srp.rasad.databinding.ObserverRowBinding
 import ir.srp.rasad.domain.models.PermittedObserversModel
@@ -56,7 +57,7 @@ class ObserversAdapter(
         private fun onClickDelete(observer: PermittedObserversModel) {
             Dialog.showSimpleDialog(
                 context = context,
-                msg = "Are you sure you want to delete this observer permission ?",
+                msg = context.getString(R.string.dialog_delete_observer_permission_msg),
                 negativeAction = {},
                 positiveAction = { listener.onClickDelete(observer) }
             )
