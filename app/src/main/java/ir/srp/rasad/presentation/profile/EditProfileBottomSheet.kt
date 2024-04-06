@@ -10,7 +10,7 @@ import ir.srp.rasad.R
 import ir.srp.rasad.core.Constants.EDIT_PROFILE_KEY
 import ir.srp.rasad.core.Constants.USERNAME_ARG_VALUE
 import ir.srp.rasad.core.utils.MessageViewer.showError
-import ir.srp.rasad.core.utils.Validation.isUsernameValid
+import ir.srp.rasad.core.utils.Validation.checkUsernameValidation
 import ir.srp.rasad.core.utils.Validation.isEmailValid
 import ir.srp.rasad.databinding.EditProfileBottomSheetLayoutBinding
 
@@ -82,7 +82,7 @@ class EditProfileBottomSheet(
         }
 
         if (args.getString(EDIT_PROFILE_KEY) == USERNAME_ARG_VALUE) {
-            if (isUsernameValid(fieldText)) {
+            if (checkUsernameValidation(fieldText).isEmpty()) {
                 binding.fieldEdt.text?.clear()
                 listener.onEditUsername(fieldText)
             } else

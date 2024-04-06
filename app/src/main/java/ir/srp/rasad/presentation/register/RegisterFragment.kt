@@ -13,7 +13,7 @@ import ir.srp.rasad.core.Constants.MOBILE_KEY
 import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.utils.Validation.isEmailValid
-import ir.srp.rasad.core.utils.Validation.isUsernameValid
+import ir.srp.rasad.core.utils.Validation.checkUsernameValidation
 import ir.srp.rasad.databinding.FragmentRegisterBinding
 import ir.srp.rasad.domain.models.UserModel
 import kotlinx.coroutines.launch
@@ -134,7 +134,7 @@ class RegisterFragment : BaseFragment() {
             showError(this, getString(R.string.snackbar_empty_username))
             return
         }
-        if (!isUsernameValid(username)) {
+        if (checkUsernameValidation(username).isNotEmpty()) {
             showError(this, getString(R.string.snackbar_invalid_username))
             return
         }

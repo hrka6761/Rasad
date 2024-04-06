@@ -11,7 +11,7 @@ import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
 import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.Resource
-import ir.srp.rasad.core.utils.Validation.isMobilNumberValid
+import ir.srp.rasad.core.utils.Validation.checkMobilNumberValidation
 import ir.srp.rasad.databinding.FragmentLoginBinding
 import kotlinx.coroutines.launch
 
@@ -92,7 +92,7 @@ class LoginFragment : BaseFragment() {
             showError(this, getString(R.string.snackbar_empty_mobile_number))
             return
         }
-        if (isMobilNumberValid(mobileNumber))
+        if (checkMobilNumberValidation(mobileNumber).isEmpty())
             viewModel.requestOtp(mobileNumber)
         else
             showError(this, getString(R.string.snackbar_incorrect_mobile_number))

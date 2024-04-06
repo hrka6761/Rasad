@@ -14,7 +14,7 @@ import ir.srp.rasad.core.BaseFragment
 import ir.srp.rasad.core.Constants.MOBILE_KEY
 import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.Resource
-import ir.srp.rasad.core.utils.Validation.isOtpValid
+import ir.srp.rasad.core.utils.Validation.checkOtpValidation
 import ir.srp.rasad.databinding.FragmentOtpBinding
 import ir.srp.rasad.domain.models.LoginDataModel
 import ir.srp.rasad.domain.models.UserModel
@@ -138,7 +138,7 @@ class OtpFragment : BaseFragment() {
     }
 
     private fun onClickSend() {
-        if (isOtpValid(binding.pinview.value))
+        if (checkOtpValidation(binding.pinview.value).isEmpty())
             viewModel.login(LoginDataModel(mobile, "111111"))
         else
             showError(this, getString(R.string.snackbar_incorrect_otp))
