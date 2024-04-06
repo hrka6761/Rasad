@@ -217,7 +217,12 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun onClickSettings() {
-        navController.navigate(R.id.settingsFragment)
+        if (isObservableLogIn)
+            showError(this, getString(R.string.observable_disable_setting_msg))
+        else if (isObserverLogIn)
+            showError(this, getString(R.string.observer_disable_setting_msg))
+        else
+            navController.navigate(R.id.settingsFragment)
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)

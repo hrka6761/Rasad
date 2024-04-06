@@ -80,6 +80,7 @@
     <string name="observable_login_fail_msg">Failed to login to the server !!!</string>
     <string name="observable_logout_success_msg">You are no longer visible.</string>
     <string name="observable_logout_fail_msg">Failed to logout from the server !!!</string>
+    <string name="observable_disable_setting_msg">Disable When track me on.</string>
 
     <string name="observer_connect_fail_msg">Failed to connect to the server !!!</string>
     <string name="observer_login_success_msg">Waiting for targets responses.</string>
@@ -90,7 +91,7 @@
     <string name="cancel_observe_msg">Canceling target observation !!!</string>
     <string name="observer_disconnect_all_targets_msg">All targets are disconnected and unreachable !!!</string>
     <string name="observer_receive_data_msg">you are tracking %1$s !!!!</string>
+    <string name="observer_disable_setting_msg">Disable When you are tracking.</string>
 
     <string name="location">location</string>
-
 </resources>
