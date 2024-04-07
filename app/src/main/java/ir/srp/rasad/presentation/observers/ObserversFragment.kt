@@ -228,12 +228,12 @@ class ObserversFragment :
     }
 
     private fun disableViews() {
-        binding.progressBar.visibility = View.VISIBLE
+        binding.progressBarContainer.visibility = View.VISIBLE
         binding.addObserverFab.isEnabled = false
     }
 
     private fun enableViews() {
-        binding.progressBar.visibility = View.GONE
+        binding.progressBarContainer.visibility = View.GONE
         binding.addObserverFab.isEnabled = true
     }
 

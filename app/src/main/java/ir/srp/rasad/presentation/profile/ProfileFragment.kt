@@ -47,11 +47,15 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
     }
 
     override fun onEditUsername(newUsername: String) {
+        disableViews()
+        editProfileBottomSheet.dismiss()
         val token = viewModel.loadUserDataResult.value.data?.token.toString()
         viewModel.updateUserName(token, preparingUserDataToUpdateUsername(newUsername))
     }
 
     override fun onEditEmail(newEmail: String) {
+        disableViews()
+        editProfileBottomSheet.dismiss()
         val token = viewModel.loadUserDataResult.value.data?.token.toString()
         viewModel.updateEmail(token, preparingUserDataToUpdateEmail(newEmail))
     }
@@ -70,12 +74,16 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
         lifecycleScope.launch {
             viewModel.loadUserDataResult.collect { response ->
                 when (response) {
-                    is Resource.Initial -> {}
+                    is Resource.Initial -> {
+                        disableViews()
+                    }
+
                     is Resource.Loading -> {}
                     is Resource.Success -> {
                         response.data?.let {
                             setUserData(response.data)
                         }
+                        enableViews()
                     }
 
                     is Resource.Error -> {
@@ -144,21 +152,20 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
                     is Resource.Initial -> {}
                     is Resource.Loading -> {}
                     is Resource.Success -> {
-                        editProfileBottomSheet.dismiss()
                         response.data?.let {
                             val newUserData = setUsernameAndGetUserModel(it)
-                            setUserData(newUserData)
                             viewModel.updateUserData(newUserData)
                             showMessage(
                                 this@ProfileFragment,
                                 getString(R.string.snackbar_successfully_done)
                             )
                         }
+                        viewModel.loadUserData()
                     }
 
                     is Resource.Error -> {
-                        editProfileBottomSheet.dismiss()
                         response.error(this@ProfileFragment)
+                        enableViews()
                     }
                 }
             }
@@ -172,21 +179,20 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
                     is Resource.Initial -> {}
                     is Resource.Loading -> {}
                     is Resource.Success -> {
-                        editProfileBottomSheet.dismiss()
                         response.data?.let {
                             val newUserData = setEmailAndGetUserModel(it)
-                            setUserData(newUserData)
                             viewModel.updateUserData(newUserData)
                             showMessage(
                                 this@ProfileFragment,
                                 getString(R.string.snackbar_successfully_done)
                             )
                         }
+                        viewModel.loadUserData()
                     }
 
                     is Resource.Error -> {
-                        editProfileBottomSheet.dismiss()
                         response.error(this@ProfileFragment)
+                        enableViews()
                     }
                 }
             }
@@ -209,5 +215,19 @@ class ProfileFragment : BaseFragment(), EditCLickListener {
         val email = userData.email
         val token = viewModel.loadUserDataResult.value.data?.token
         return UserModel(id, username, mobile, email, token)
+    }
+
+    private fun enableViews() {
+        binding.progressBarContainer.visibility = View.GONE
+        binding.username.isEnabled = true
+        binding.email.isEnabled = true
+        binding.backProfileBtn.isEnabled = true
+    }
+
+    private fun disableViews() {
+        binding.progressBarContainer.visibility = View.VISIBLE
+        binding.username.isEnabled = false
+        binding.email.isEnabled = false
+        binding.backProfileBtn.isEnabled = false
     }
 }
