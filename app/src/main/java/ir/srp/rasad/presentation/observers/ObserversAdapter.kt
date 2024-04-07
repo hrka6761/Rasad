@@ -17,6 +17,8 @@ class ObserversAdapter(
 
     private lateinit var binding: ObserverRowBinding
     private lateinit var _observers: MutableList<PermittedObserversModel>
+    var isAdapterInitialized = false
+        private set
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ObserverViewHolder {
@@ -33,6 +35,7 @@ class ObserversAdapter(
 
     fun setList(observers: MutableList<PermittedObserversModel>) {
         _observers = observers
+        isAdapterInitialized = true
     }
 
     @SuppressLint("NotifyDataSetChanged")

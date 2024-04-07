@@ -33,6 +33,6 @@ class E404 @Inject constructor() : Error {
     }
 
     private fun showEmptyList(fragment: ObserversFragment) {
-        fragment.noObserverAction()
+        fragment.error404Action()
     }
 }

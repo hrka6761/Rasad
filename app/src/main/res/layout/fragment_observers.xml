@@ -54,7 +54,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:text="Add"
+        android:text="@string/btn_add_observer"
         app:icon="@drawable/add"
         app:iconGravity="textStart"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -11,7 +11,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
+import ir.srp.rasad.core.Constants.ADD_OBSERVER_REQ_TYPE
+import ir.srp.rasad.core.Constants.GET_OBSERVER_REQ_TYPE
 import ir.srp.rasad.core.Resource
+import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.databinding.FragmentObserversBinding
 import ir.srp.rasad.domain.models.ObserverOperationModel
 import ir.srp.rasad.domain.models.PermittedObserversModel
@@ -19,13 +22,18 @@ import ir.srp.rasad.domain.models.UserModel
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener {
+class ObserversFragment :
+    BaseFragment(),
+    ObserversAdapter.ObserverClickListener,
+    AddObserverListener {
 
     private lateinit var binding: FragmentObserversBinding
     private val viewModel: ObserversViewModel by viewModels()
     private lateinit var adapter: ObserversAdapter
     private lateinit var userData: UserModel
     private var clickedObserver: PermittedObserversModel? = null
+    private val addObserverBottomSheet = AddObserverBottomSheet(this)
+    private var requestType: String = GET_OBSERVER_REQ_TYPE
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +60,18 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
         navController.navigate(R.id.settingsFragment)
     }
 
+    override fun onClickAddObserver(observer: String) {
+        disableViews()
+        val observerOperationModel = ObserverOperationModel(
+            userData.id!!,
+            observer,
+            userData.username!!
+        )
+        viewModel.addObserver(userData.token!!, observerOperationModel)
+        requestType = ADD_OBSERVER_REQ_TYPE
+        addObserverBottomSheet.dismiss()
+    }
+
     @SuppressLint("NotifyDataSetChanged")
     override fun onClickDelete(observer: PermittedObserversModel) {
         clickedObserver = observer
@@ -64,7 +84,7 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
     }
 
     override fun onEmptyList() {
-        noObserverAction()
+        error404Action()
     }
 
 
@@ -72,8 +92,10 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
         disableViews()
         initGetObserversResponse()
         initDeleteObserverResponse()
+        initAddObserverResponse()
         initLoadUserDataResult()
         initToolbarBackButton()
+        initAddObserverButton()
     }
 
     private fun initDeleteObserverResponse() {
@@ -102,6 +124,7 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun initGetObserversResponse() {
         lifecycleScope.launch {
             viewModel.observers.collect { response ->
@@ -110,20 +133,47 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
                     is Resource.Loading -> {}
                     is Resource.Success -> {
                         if (response.data != null) {
-                            if (response.data.isNotEmpty()) {
+                            if (!adapter.isAdapterInitialized) {
+                                if (response.data.isNotEmpty()) {
+                                    adapter.setList(response.data.toMutableList())
+                                    binding.rv.layoutManager = LinearLayoutManager(
+                                        requireContext(),
+                                        LinearLayoutManager.VERTICAL,
+                                        false
+                                    )
+                                    binding.rv.adapter = adapter
+                                }
+                            } else {
                                 adapter.setList(response.data.toMutableList())
-                                binding.rv.layoutManager = LinearLayoutManager(
-                                    requireContext(),
-                                    LinearLayoutManager.VERTICAL,
-                                    false
-                                )
-                                binding.rv.adapter = adapter
-                            } else
-                                binding.noList.visibility = View.VISIBLE
+                                adapter.notifyDataSetChanged()
+                            }
                         } else
                             binding.noList.visibility = View.VISIBLE
 
                         enableViews()
+                    }
+
+                    is Resource.Error -> {
+                        response.error(this@ObserversFragment)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun initAddObserverResponse() {
+        lifecycleScope.launch {
+            viewModel.addObserverResponse.collect { response ->
+                when (response) {
+                    is Resource.Initial -> {}
+                    is Resource.Loading -> {}
+                    is Resource.Success -> {
+                        val observerOperationModel = ObserverOperationModel(
+                            userData.id!!,
+                            userData.username!!
+                        )
+                        viewModel.getObservers(userData.token!!, observerOperationModel)
+                        requestType = GET_OBSERVER_REQ_TYPE
                     }
 
                     is Resource.Error -> {
@@ -148,6 +198,7 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
                                 username = userModel.username!!
                             )
                             viewModel.getObservers(userModel.token!!, observerOperationModel)
+                            requestType = GET_OBSERVER_REQ_TYPE
                         }
                     }
 
@@ -165,6 +216,17 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
         binding.backSettingsBtn.setOnClickListener { onBackPressed() }
     }
 
+    private fun initAddObserverButton() {
+        binding.addObserverFab.setOnClickListener { onClickAddObserver() }
+    }
+
+    private fun onClickAddObserver() {
+        addObserverBottomSheet.show(
+            requireActivity().supportFragmentManager,
+            addObserverBottomSheet.tag
+        )
+    }
+
     private fun disableViews() {
         binding.progressBar.visibility = View.VISIBLE
         binding.addObserverFab.isEnabled = false
@@ -176,7 +238,17 @@ class ObserversFragment : BaseFragment(), ObserversAdapter.ObserverClickListener
     }
 
 
-    fun noObserverAction() {
+    fun error404Action() {
+        if (requestType == GET_OBSERVER_REQ_TYPE)
+            binding.noList.visibility = View.VISIBLE
+        else
+            showError(this, getString(R.string.snackbar_not_found_observer))
+
+        enableViews()
+    }
+
+    fun networkErrorAction() {
+        showError(this, getString(R.string.txt_network_error))
         binding.noList.visibility = View.VISIBLE
         enableViews()
     }

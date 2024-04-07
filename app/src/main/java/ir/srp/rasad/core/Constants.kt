@@ -26,6 +26,8 @@ object Constants {
     const val CLOSE_WEBSOCKET_STATUS_CODE = 1000
     const val CLOSE_WEBSOCKET_STATUS_REASON = "disconnect"
     const val TARGETS_KEY = "targets"
+    const val GET_OBSERVER_REQ_TYPE = "getObservers"
+    const val ADD_OBSERVER_REQ_TYPE = "addObserver"
 
     const val LOCATION_PERMISSION_TYPE_CHANGES = 5
     const val LOCATION_PERMISSION_TYPE_EVERY_5_M = 300

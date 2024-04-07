@@ -19,6 +19,7 @@
     <string name="btn_send_request">Request</string>
     <string name="btn_new_target">New target</string>
     <string name="btn_cancel_request_waiting">Cancel</string>
+    <string name="btn_add_observer">Add</string>
 
     <string name="txt_login_toolbar_title">Login</string>
     <string name="txt_settings_toolbar_title">Settings</string>
@@ -40,10 +41,12 @@
     <string name="txt_username_title">Username</string>
     <string name="txt_mobile_title">Mobile</string>
     <string name="txt_edit_profile_bottom_sheet_desc">Please insert your new %1$s</string>
+    <string name="txt_add_observer_bottom_sheet_desc">Please enter your target username</string>
     <string name="txt_waiting">Please wait …</string>
     <string name="txt_response_waiting">Waiting for targets responses …</string>
     <string name="txt_loading_error">Loading Error !!!</string>
     <string name="txt_no_permitted_observer">No permitted observer</string>
+    <string name="txt_network_error">Network error !!!</string>
 
     <string name="snackbar_incorrect_mobile_number">The mobile number is not correct.</string>
     <string name="snackbar_incorrect_otp">The code is not correct.</string>
@@ -61,6 +64,8 @@
     <string name="snackbar_empty_target">Insert Your target username</string>
     <string name="snackbar_not_selected_location_interval">Please select a sending interval</string>
     <string name="snackbar_not_selected_targets">Please select your targets</string>
+    <string name="snackbar_not_found_observer">The observer was not found</string>
+    <string name="snackbar_empty_observer">Please fill the username</string>
 
     <string name="dialog_notification_dialog_msg">You need to grant notification permission to display app operations when you closing the app.</string>
     <string name="dialog_basic_location_dialog_msg">You need to grant location permission for the app to access your current location.</string>

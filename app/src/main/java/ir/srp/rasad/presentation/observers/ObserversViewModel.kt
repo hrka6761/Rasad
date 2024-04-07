@@ -34,6 +34,8 @@ class ObserversViewModel @Inject constructor(
     val observers: StateFlow<Resource<List<PermittedObserversModel>?>> = _observers
     private val _deleteObserverResponse: MutableStateFlow<Resource<ResponseBody?>> = MutableStateFlow(Resource.Initial())
     val deleteObserverResponse: StateFlow<Resource<ResponseBody?>> = _deleteObserverResponse
+    private val _addObserverResponse: MutableStateFlow<Resource<ResponseBody?>> = MutableStateFlow(Resource.Initial())
+    val addObserverResponse: StateFlow<Resource<ResponseBody?>> = _addObserverResponse
 
 
     fun loadUserData() {
@@ -54,6 +56,13 @@ class ObserversViewModel @Inject constructor(
         viewModelScope.launch(io) {
             _deleteObserverResponse.value = Resource.Loading()
             _deleteObserverResponse.value = deleteObserverUseCase(token, observerOperationModel)
+        }
+    }
+
+    fun addObserver(token: String, observerOperationModel: ObserverOperationModel) {
+        viewModelScope.launch(io) {
+            _addObserverResponse.value = Resource.Loading()
+            _addObserverResponse.value = addObserverUseCase(token, observerOperationModel)
         }
     }
 }
