@@ -31,7 +31,7 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
         onClientDisconnect: ((t: Throwable, response: Response?) -> Unit)?,
     ) {
         listener.onConnectSuccess = onConnectSuccess
-        listener.onConnectFail = onConnectFail
+        listener.onConnectionFail = onConnectFail
         listener.onServerDisconnect = onServerDisconnect
         listener.onClientDisconnect = onClientDisconnect
 
@@ -56,7 +56,7 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
         data: WebsocketDataModel,
         onSendMessageFail: ((t: Throwable, response: Response?) -> Unit)?,
     ) {
-        listener.onSendMessageFail = onSendMessageFail
+        listener.onConnectionFail = onSendMessageFail
         webSocket.send(jsonConverter.convertObjectToJsonString(data))
     }
 
@@ -74,12 +74,11 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
     private inner class ChannelListener : WebSocketListener() {
 
         var onConnectSuccess: ((response: Response) -> Unit)? = null
-        var onConnectFail: ((t: Throwable, response: Response?) -> Unit)? = null
+        var onConnectionFail: ((t: Throwable, response: Response?) -> Unit)? = null
         var onServerDisconnect: ((t: Throwable, response: Response?) -> Unit)? = null
         var onClientDisconnect: ((t: Throwable, response: Response?) -> Unit)? = null
         var onClosingConnection: ((code: Int, reason: String) -> Unit)? = null
         var onClosedConnection: ((code: Int, reason: String) -> Unit)? = null
-        var onSendMessageFail: ((t: Throwable, response: Response?) -> Unit)? = null
         var onReceiveTextMessage: ((text: String) -> Unit)? = null
         var onReceiveBinaryMessage: ((bytes: ByteString) -> Unit)? = null
 
@@ -88,7 +87,7 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
             super.onOpen(webSocket, response)
 
             onConnectSuccess?.let { it(response) }
-            onConnectFail = null
+            this.onConnectionFail = null
             isConnected = true
         }
 
@@ -111,8 +110,7 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
                 return
             }
 
-            onConnectFail?.let { it(t, response) }
-            onSendMessageFail?.let { it(t, response) }
+            this.onConnectionFail?.let { it(t, response) }
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {

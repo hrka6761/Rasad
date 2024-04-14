@@ -9,7 +9,6 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
-import android.os.Build.VERSION_CODES.O
 import android.os.Build.VERSION_CODES.S
 import android.os.Bundle
 import android.os.IBinder
@@ -29,6 +28,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
+import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVABLE
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
@@ -50,11 +50,15 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECEIVE_REQUEST_PERMISSION
 import ir.srp.rasad.core.Constants.OBSERVABLE_GET_PERMISSION_DATA
+import ir.srp.rasad.core.Constants.OBSERVABLE_RECONNECTING
+import ir.srp.rasad.core.Constants.OBSERVABLE_RECONNECT_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_RECONNECT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVABLE_SENDING_PERMISSION_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_PERMISSION_REQUEST
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_READY
+import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_RELOADING
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_SENDING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
@@ -72,6 +76,7 @@ import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_RECEIVING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVER_REQUEST_LAST_RECEIVED_DATA
+import ir.srp.rasad.core.Constants.RECONNECT_INTERVAL
 import ir.srp.rasad.core.Constants.SERVICE_BUNDLE_KEY
 import ir.srp.rasad.core.Constants.SERVICE_DATA_KEY
 import ir.srp.rasad.core.Constants.SERVICE_STATE
@@ -93,10 +98,14 @@ import ir.srp.rasad.domain.usecases.track_usecases.TransferTrackDataUseCase
 import ir.srp.rasad.domain.usecases.track_usecases.TrackConnectionUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Named
 
+@Suppress("DEPRECATION", "UNCHECKED_CAST")
+@RequiresApi(S)
+@SuppressLint("HandlerLeak")
 @AndroidEntryPoint
 class MainService : Service() {
 
@@ -137,9 +146,9 @@ class MainService : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val locationCallback = getLocationCallback()
     private var lastReceivedData: DataModel? = null
+    private var isReconnectCanceled = false
 
 
-    @RequiresApi(S)
     override fun onCreate() {
         super.onCreate()
 
@@ -156,7 +165,6 @@ class MainService : Service() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
-    @RequiresApi(S)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val bundle = intent?.getBundleExtra(SERVICE_BUNDLE_KEY)
         val action = intent?.action
@@ -166,7 +174,6 @@ class MainService : Service() {
         return START_STICKY
     }
 
-    @RequiresApi(S)
     override fun onBind(intent: Intent?): IBinder? {
         CoroutineScope(io).launch {
             transferTrackDataUseCase.receiveData(
@@ -178,7 +185,8 @@ class MainService : Service() {
     }
 
 
-    @RequiresApi(S)
+    // Common functions ----------------------------------------------------------------------------
+
     private fun handleStartIntentData(bundle: Bundle) {
         when (bundle.getString(SERVICE_TYPE_KEY)) {
 
@@ -235,7 +243,6 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(S)
     private fun handleAction(action: String) {
         when (action) {
 
@@ -268,7 +275,6 @@ class MainService : Service() {
     }
 
     @SuppressLint("StringFormatMatches")
-    @RequiresApi(S)
     private fun onReceiveTextMessage(text: String) {
         val data =
             jsonConverter.convertJsonStringToObject(
@@ -454,7 +460,6 @@ class MainService : Service() {
         serviceMessenger?.send(message)
     }
 
-    @RequiresApi(O)
     private fun createNotificationChannel() {
         notificationChannel = NotificationChannel(
             CHANNEL_ID, CHANNEL_ID,
@@ -463,7 +468,6 @@ class MainService : Service() {
         notificationManager.createNotificationChannel(notificationChannel)
     }
 
-    @RequiresApi(S)
     private fun createNotification(title: String, message: String, onGoing: Boolean): Notification {
         return NotificationCompat
             .Builder(this, CHANNEL_ID)
@@ -475,7 +479,6 @@ class MainService : Service() {
             .build()
     }
 
-    @RequiresApi(S)
     @SuppressLint("RemoteViewLayout")
     private fun createPermissionNotification(
         title: String,
@@ -520,8 +523,8 @@ class MainService : Service() {
     }
 
 
-    // Observable Actions --------------------------------------------------------------------------
-    @RequiresApi(S)
+    // Observable functions ------------------------------------------------------------------------
+
     private fun connectObservableToServer() {
         CoroutineScope(io).launch {
             trackConnectionUseCase.createChannel(
@@ -536,7 +539,24 @@ class MainService : Service() {
         state = OBSERVABLE_STATE_LOADING
     }
 
-    @RequiresApi(S)
+    private fun reconnectObservableToServer() {
+        CoroutineScope(io).launch {
+            trackConnectionUseCase.createChannel(
+                url = WEBSOCKET_URL,
+                successCallback = { observableReconnectSuccessAction() },
+                failCallback = { _, _ ->
+                    CoroutineScope(io).launch {
+                        observableReconnectFailAction()
+                    }
+                },
+                serverDisconnectCallback = { _, _ -> observableDisconnectAction() },
+                clientDisconnectCallback = { _, _ -> observableDisconnectAction() }
+            )
+        }
+        sendSimpleMessageToHomeFragment(OBSERVABLE_RECONNECTING)
+        state = OBSERVABLE_STATE_RELOADING
+    }
+
     private fun logOutObservable() {
         CoroutineScope(io).launch {
             transferTrackDataUseCase.sendData(
@@ -552,13 +572,16 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(S)
     private fun observableConnectSuccessAction() {
         sendSimpleMessageToHomeFragment(OBSERVABLE_CONNECT_SUCCESS)
         loginObservable()
     }
 
-    @RequiresApi(S)
+    private fun observableReconnectSuccessAction() {
+        sendSimpleMessageToHomeFragment(OBSERVABLE_RECONNECT_SUCCESS)
+        loginObservable()
+    }
+
     private fun loginObservable() {
         CoroutineScope(io).launch {
             transferTrackDataUseCase.sendData(
@@ -575,7 +598,6 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(S)
     private fun observableConnectFailAction() {
         sendSimpleMessageToHomeFragment(OBSERVABLE_CONNECT_FAIL)
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -591,25 +613,29 @@ class MainService : Service() {
         state = STATE_DISABLE
     }
 
-    @RequiresApi(S)
+    private suspend fun observableReconnectFailAction() {
+        sendSimpleMessageToHomeFragment(OBSERVABLE_RECONNECT_FAIL)
+        delay(RECONNECT_INTERVAL)
+        if (!isReconnectCanceled)
+            reconnectObservableToServer()
+    }
+
     private fun observableDisconnectAction() {
+        isReconnectCanceled = false
         sendSimpleMessageToHomeFragment(DISCONNECT)
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         notificationManager.notify(
             NOTIFICATION_ID,
             createNotification(
                 getString(R.string.app_name),
-                getString(R.string.disconnect_msg),
+                getString(R.string.reconnecting_msg),
                 false
             )
         )
-        isServiceStarted = false
         isObservableLogIn = false
         state = STATE_DISABLE
-        observableTargets.clear()
+        reconnectObservableToServer()
     }
 
-    @RequiresApi(S)
     private fun observableSendMessageFailAction(type: WebSocketDataType) {
         when (type) {
             WebSocketDataType.LogInObservable -> {
@@ -660,7 +686,6 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(S)
     private fun handleRequestPermission(data: WebsocketDataModel) {
         var interval = 0
         val permissionsList = data.data?.split(",")
@@ -687,7 +712,6 @@ class MainService : Service() {
         )
     }
 
-    @RequiresApi(S)
     private fun observableSendDenyData(target: String) {
         CoroutineScope(io).launch {
             sendSimpleMessageToHomeFragment(OBSERVABLE_SENDING_PERMISSION_RESPONSE)
@@ -705,7 +729,6 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(S)
     private fun observableSendGrantData(target: String) {
         CoroutineScope(io).launch {
             sendSimpleMessageToHomeFragment(OBSERVABLE_SENDING_PERMISSION_RESPONSE)
@@ -723,7 +746,6 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(O)
     @SuppressLint("MissingPermission")
     private fun observableSendLocationData(data: String) {
         var interval = 0
@@ -788,9 +810,27 @@ class MainService : Service() {
             .build()
     }
 
+    private fun observableCancelReconnect() {
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        notificationManager.notify(
+            NOTIFICATION_ID,
+            createNotification(
+                getString(R.string.app_name),
+                getString(R.string.observable_logout_success_msg),
+                false
+            )
+        )
+        disconnectServer()
+        isServiceStarted = false
+        isObservableLogIn = false
+        state = STATE_DISABLE
+        observableTargets.clear()
+        isReconnectCanceled = true
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
 
-    // Observer Actions ----------------------------------------------------------------------------
-    @RequiresApi(S)
+    // Observer functions ----------------------------------------------------------------------------
+
     private fun logOutObserver() {
         val targetsUserName =
             observerTargets.map { targetModel -> targetModel.username }.toTypedArray()
@@ -807,7 +847,6 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(S)
     private fun connectObserverToServer() {
         sendSimpleMessageToHomeFragment(OBSERVER_CONNECTING)
         CoroutineScope(io).launch {
@@ -822,13 +861,11 @@ class MainService : Service() {
         state = OBSERVER_STATE_LOADING
     }
 
-    @RequiresApi(S)
     private fun observerConnectSuccessAction() {
         sendSimpleMessageToHomeFragment(OBSERVER_CONNECT_SUCCESS)
         loginObserver()
     }
 
-    @RequiresApi(S)
     private fun observerConnectFailAction() {
         sendSimpleMessageToHomeFragment(OBSERVER_CONNECT_FAIL)
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -845,7 +882,6 @@ class MainService : Service() {
         observerTargets.clear()
     }
 
-    @RequiresApi(S)
     private fun loginObserver() {
         CoroutineScope(io).launch {
             transferTrackDataUseCase.sendData(
@@ -862,14 +898,12 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(S)
     private fun observerLoginSuccessAction() {
         sendSimpleMessageToHomeFragment(OBSERVER_LOGIN_SUCCESS)
         isObserverLogIn = true
         observerSendRequestData(observerTargets.toTypedArray())
     }
 
-    @RequiresApi(S)
     private fun observerSendRequestData(targets: Array<TargetModel>) {
         val targetsUserName =
             targets.map { targetModel -> targetModel.username }.toTypedArray()
@@ -896,7 +930,6 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(S)
     private fun observerDisconnectAction() {
         sendSimpleMessageToHomeFragment(DISCONNECT)
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -914,10 +947,8 @@ class MainService : Service() {
         isObserverTrackStarted = false
         state = STATE_DISABLE
         observerTargets.clear()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
-    @RequiresApi(S)
     private fun observerSendMessageFailAction(type: WebSocketDataType) {
         when (type) {
             WebSocketDataType.LogInObserver -> {
@@ -936,7 +967,6 @@ class MainService : Service() {
         }
     }
 
-    @RequiresApi(S)
     private fun observerLoginFailAction() {
         sendSimpleMessageToHomeFragment(OBSERVER_LOGIN_FAIL)
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -954,7 +984,6 @@ class MainService : Service() {
         observerTargets.clear()
     }
 
-    @RequiresApi(S)
     private fun observerRequestDataFailAction() {
         sendSimpleMessageToHomeFragment(OBSERVER_SEND_REQUEST_DATA_FAIL)
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -973,7 +1002,6 @@ class MainService : Service() {
         observerTargets.clear()
     }
 
-    @RequiresApi(S)
     private fun cancelObservation(msg: String) {
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         notificationManager.notify(
@@ -993,8 +1021,6 @@ class MainService : Service() {
     }
 
 
-    @RequiresApi(S)
-    @SuppressLint("HandlerLeak")
     private inner class Handler : android.os.Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
@@ -1039,6 +1065,10 @@ class MainService : Service() {
                             OBSERVABLE_ADDED_NEW_OBSERVER,
                             observableTargets
                         )
+                }
+
+                CANCEL_RECONNECT_OBSERVABLE -> {
+                    observableCancelReconnect()
                 }
 
                 else -> super.handleMessage(msg)
