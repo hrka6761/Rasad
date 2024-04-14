@@ -7,8 +7,8 @@ import android.content.ComponentName
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.os.Build
-import android.os.Build.VERSION_CODES.O
+import android.os.Build.VERSION_CODES.S
+import android.os.Build.VERSION_CODES.TIRAMISU
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
@@ -32,6 +32,7 @@ import ir.srp.rasad.R
 import ir.srp.rasad.core.BaseFragment
 import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
+import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVABLE
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
@@ -53,12 +54,16 @@ import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECEIVE_REQUEST_PERMISSION
 import ir.srp.rasad.core.Constants.OBSERVABLE_GET_PERMISSION_DATA
+import ir.srp.rasad.core.Constants.OBSERVABLE_RECONNECTING
+import ir.srp.rasad.core.Constants.OBSERVABLE_RECONNECT_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_RECONNECT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_REQUEST_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVABLE_SENDING_PERMISSION_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVABLE_SEND_DATA_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_PERMISSION_REQUEST
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_READY
+import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_RELOADING
 import ir.srp.rasad.core.Constants.OBSERVABLE_STATE_SENDING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
@@ -105,6 +110,7 @@ import org.neshan.mapsdk.model.Marker
 import javax.inject.Inject
 
 @Suppress("UNCHECKED_CAST")
+@RequiresApi(S)
 @AndroidEntryPoint
 class HomeFragment : BaseFragment(), RequestTargetListener {
 
@@ -144,7 +150,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         return binding.root
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @RequiresApi(TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initialize()
@@ -156,7 +162,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         unBindService()
     }
 
-    @RequiresApi(O)
     override fun onRequest(isNewTarget: Boolean, vararg targets: TargetModel) {
         if (isNewTarget)
             for (target in targets)
@@ -172,7 +177,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @RequiresApi(TIRAMISU)
     private fun initialize() {
         initGetTargetsResult()
         initSettingsButton()
@@ -225,7 +230,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             navController.navigate(R.id.settingsFragment)
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @RequiresApi(TIRAMISU)
     private fun initTrackMeButton() {
         binding.onOffFab.setOnClickListener { onShortClickOnOff() }
         binding.onOffFab.setOnLongClickListener {
@@ -234,7 +239,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @RequiresApi(TIRAMISU)
     private fun onLongClickOnOff() {
         if (!permissionManager.hasPreciseLocationPermission() && !permissionManager.hasApproximateLocationPermission()) {
             showSimpleDialog(
@@ -312,12 +317,12 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         binding.settingsImg.isEnabled = true
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @RequiresApi(TIRAMISU)
     private fun initTrackOtherButton() {
         binding.addMemberFab.setOnClickListener { showTrackUserSheet() }
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @RequiresApi(TIRAMISU)
     private fun showTrackUserSheet() {
         if (!permissionManager.hasNotificationPermission()) {
             showSimpleDialog(
@@ -381,7 +386,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         }
     }
 
-    @RequiresApi(O)
     private fun startService(type: String, data: Any? = null) {
         val intent = Intent(requireContext(), MainService::class.java)
         val bundle = Bundle()
@@ -464,6 +468,8 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun observableLogInSuccessAction() {
+        binding.cancelWaitingBtn.visibility = View.GONE
+        binding.waitingTxt.text = getString(R.string.txt_waiting)
         isObservableLogIn = true
         enableViews()
         disableObserver()
@@ -549,6 +555,33 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     private fun disconnectAllObserverAction() {
         binding.trackersContainer.visibility = View.GONE
+    }
+
+    private fun observableReconnectingActions() {
+        binding.onOffFab.setImageResource(R.drawable.powering)
+        binding.waitingTxt.text = getString(R.string.reconnecting_msg)
+        binding.cancelWaitingBtn.visibility = View.VISIBLE
+        binding.cancelWaitingBtn.setOnClickListener { onClickCancelReconnect() }
+        disableViews()
+    }
+
+    private fun onClickCancelReconnect() {
+        isServiceStarted = false
+        isObserverLogIn = false
+        binding.cancelWaitingBtn.visibility = View.GONE
+        binding.waitingTxt.text = getString(R.string.txt_waiting)
+        binding.onOffFab.setImageResource(R.drawable.power_off)
+        enableViews()
+        val msg = Message.obtain(null, CANCEL_RECONNECT_OBSERVABLE)
+        homeMessenger?.send(msg)
+    }
+
+    private fun observableReconnectSuccessActions() {
+
+    }
+
+    private fun observableReconnectFailActions() {
+
     }
 
 
@@ -752,12 +785,15 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 val msg = Message.obtain(null, OBSERVABLE_REQUEST_TARGETS)
                 homeMessenger?.send(msg)
             }
+
+            OBSERVABLE_STATE_RELOADING -> {
+                observableReconnectingActions()
+            }
         }
     }
 
 
     private inner class PermissionsRequestCallback : ActivityResultCallback<Map<String, Boolean>> {
-        @RequiresApi(Build.VERSION_CODES.Q)
         override fun onActivityResult(result: Map<String, Boolean>) {
             for (item in result) {
                 if (!item.value) {
@@ -898,6 +934,18 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
                 OBSERVABLE_DISCONNECT_ALL_TARGETS -> {
                     disconnectAllObserverAction()
+                }
+
+                OBSERVABLE_RECONNECTING -> {
+                    observableReconnectingActions()
+                }
+
+                OBSERVABLE_RECONNECT_SUCCESS -> {
+                    observableReconnectSuccessActions()
+                }
+
+                OBSERVABLE_RECONNECT_FAIL -> {
+                    observableReconnectFailActions()
                 }
 
 

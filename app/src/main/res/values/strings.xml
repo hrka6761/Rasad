@@ -78,6 +78,7 @@
     <string name="on_off_fab_content_description">On/Off</string>
 
     <string name="connecting_msg">Please wait …</string>
+    <string name="reconnecting_msg">Reconnecting …</string>
     <string name="disconnect_msg">App Stopped and disconnected from the server.</string>
 
     <string name="observable_connect_fail_msg">Failed to connect to the server !!!</string>

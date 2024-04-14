@@ -2,8 +2,8 @@ package ir.srp.rasad.core
 
 object Constants {
 
-    const val HTTP_BASE_URL = "http://srp-rasad.ir:30001/api/user/"
-    const val WEBSOCKET_URL = "ws://srp-rasad.ir:30002"
+    const val HTTP_BASE_URL = "http://192.168.54.187:30001/api/user/"
+    const val WEBSOCKET_URL = "ws://192.168.54.187:30002"
 
     const val MOBILE_KEY = "mobile"
     const val USER_STATE_KEY = "userAccountState"
@@ -28,6 +28,7 @@ object Constants {
     const val TARGETS_KEY = "targets"
     const val GET_OBSERVER_REQ_TYPE = "getObservers"
     const val ADD_OBSERVER_REQ_TYPE = "addObserver"
+    const val RECONNECT_INTERVAL = 3000L
 
     const val LOCATION_PERMISSION_TYPE_CHANGES = 5
     const val LOCATION_PERMISSION_TYPE_EVERY_5_M = 300
@@ -61,30 +62,35 @@ object Constants {
     const val OBSERVABLE_ADDED_NEW_OBSERVER = 20
     const val OBSERVABLE_DISCONNECT_ALL_TARGETS = 21
     const val OBSERVABLE_REQUEST_TARGETS = 22
+    const val OBSERVABLE_RECONNECTING = 23
+    const val OBSERVABLE_RECONNECT_SUCCESS = 24
+    const val OBSERVABLE_RECONNECT_FAIL = 25
+    const val CANCEL_RECONNECT_OBSERVABLE = 26
 
-    const val OBSERVER_CONNECTING = 23
-    const val OBSERVER_CONNECT_SUCCESS = 24
-    const val OBSERVER_CONNECT_FAIL = 25
-    const val OBSERVER_LOGIN_SUCCESS = 26
-    const val OBSERVER_LOGIN_FAIL = 27
-    const val OBSERVER_SENDING_REQUEST_DATA = 28
-    const val OBSERVER_SEND_REQUEST_DATA_SUCCESS = 29
-    const val OBSERVER_SEND_REQUEST_DATA_FAIL = 30
-    const val CANCEL_OBSERVE = 31
-    const val OBSERVER_DISCONNECT_ALL_TARGETS = 32
-    const val OBSERVER_DISCONNECT_TARGET = 33
-    const val OBSERVER_RECEIVE_DATA = 34
-    const val OBSERVER_REQUEST_LAST_RECEIVED_DATA = 35
-    const val OBSERVER_LAST_RECEIVED_DATA = 36
-    const val OBSERVER_FAILURE = 37
-    const val OBSERVER_LOGIN_STATE = 38
+    const val OBSERVER_CONNECTING = 27
+    const val OBSERVER_CONNECT_SUCCESS = 28
+    const val OBSERVER_CONNECT_FAIL = 29
+    const val OBSERVER_LOGIN_SUCCESS = 30
+    const val OBSERVER_LOGIN_FAIL = 31
+    const val OBSERVER_SENDING_REQUEST_DATA = 32
+    const val OBSERVER_SEND_REQUEST_DATA_SUCCESS = 33
+    const val OBSERVER_SEND_REQUEST_DATA_FAIL = 34
+    const val CANCEL_OBSERVE = 35
+    const val OBSERVER_DISCONNECT_ALL_TARGETS = 36
+    const val OBSERVER_DISCONNECT_TARGET = 37
+    const val OBSERVER_RECEIVE_DATA = 38
+    const val OBSERVER_REQUEST_LAST_RECEIVED_DATA = 39
+    const val OBSERVER_LAST_RECEIVED_DATA = 40
+    const val OBSERVER_FAILURE = 41
+    const val OBSERVER_LOGIN_STATE = 42
 
-    const val STATE_DISABLE = 39
-    const val OBSERVER_STATE_LOADING = 40
-    const val OBSERVER_STATE_WAITING_RESPONSE = 41
-    const val OBSERVER_STATE_RECEIVING_DATA = 42
-    const val OBSERVABLE_STATE_LOADING = 43
-    const val OBSERVABLE_STATE_READY = 44
-    const val OBSERVABLE_STATE_PERMISSION_REQUEST = 45
-    const val OBSERVABLE_STATE_SENDING_DATA = 46
+    const val STATE_DISABLE = 43
+    const val OBSERVER_STATE_LOADING = 44
+    const val OBSERVER_STATE_WAITING_RESPONSE = 45
+    const val OBSERVER_STATE_RECEIVING_DATA = 46
+    const val OBSERVABLE_STATE_LOADING = 47
+    const val OBSERVABLE_STATE_READY = 48
+    const val OBSERVABLE_STATE_PERMISSION_REQUEST = 49
+    const val OBSERVABLE_STATE_SENDING_DATA = 50
+    const val OBSERVABLE_STATE_RELOADING = 51
 }
