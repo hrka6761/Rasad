@@ -29,6 +29,7 @@ import ir.srp.rasad.R
 import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVABLE
+import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVER
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
@@ -69,6 +70,9 @@ import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_RECEIVE_DATA
+import ir.srp.rasad.core.Constants.OBSERVER_RECONNECTING
+import ir.srp.rasad.core.Constants.OBSERVER_RECONNECT_FAIL
+import ir.srp.rasad.core.Constants.OBSERVER_RECONNECT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_SENDING_REQUEST_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_SUCCESS
@@ -76,6 +80,7 @@ import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_RECEIVING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVER_REQUEST_LAST_RECEIVED_DATA
+import ir.srp.rasad.core.Constants.OBSERVER_STATE_RELOADING
 import ir.srp.rasad.core.Constants.RECONNECT_INTERVAL
 import ir.srp.rasad.core.Constants.SERVICE_BUNDLE_KEY
 import ir.srp.rasad.core.Constants.SERVICE_DATA_KEY
@@ -557,6 +562,18 @@ class MainService : Service() {
         state = OBSERVABLE_STATE_RELOADING
     }
 
+    private suspend fun observableReconnectFailAction() {
+        sendSimpleMessageToHomeFragment(OBSERVABLE_RECONNECT_FAIL)
+        delay(RECONNECT_INTERVAL)
+        if (!isReconnectCanceled)
+            reconnectObservableToServer()
+    }
+
+    private fun observableReconnectSuccessAction() {
+        sendSimpleMessageToHomeFragment(OBSERVABLE_RECONNECT_SUCCESS)
+        loginObservable()
+    }
+
     private fun logOutObservable() {
         CoroutineScope(io).launch {
             transferTrackDataUseCase.sendData(
@@ -574,11 +591,6 @@ class MainService : Service() {
 
     private fun observableConnectSuccessAction() {
         sendSimpleMessageToHomeFragment(OBSERVABLE_CONNECT_SUCCESS)
-        loginObservable()
-    }
-
-    private fun observableReconnectSuccessAction() {
-        sendSimpleMessageToHomeFragment(OBSERVABLE_RECONNECT_SUCCESS)
         loginObservable()
     }
 
@@ -611,13 +623,6 @@ class MainService : Service() {
         )
         isServiceStarted = false
         state = STATE_DISABLE
-    }
-
-    private suspend fun observableReconnectFailAction() {
-        sendSimpleMessageToHomeFragment(OBSERVABLE_RECONNECT_FAIL)
-        delay(RECONNECT_INTERVAL)
-        if (!isReconnectCanceled)
-            reconnectObservableToServer()
     }
 
     private fun observableDisconnectAction() {
@@ -861,6 +866,36 @@ class MainService : Service() {
         state = OBSERVER_STATE_LOADING
     }
 
+    private fun reconnectObserverToServer() {
+        CoroutineScope(io).launch {
+            trackConnectionUseCase.createChannel(
+                url = WEBSOCKET_URL,
+                successCallback = { observerReconnectSuccessAction() },
+                failCallback = { _, _ ->
+                    CoroutineScope(io).launch {
+                        observerReconnectFailAction()
+                    }
+                },
+                serverDisconnectCallback = { _, _ -> observerDisconnectAction() },
+                clientDisconnectCallback = { _, _ -> observerDisconnectAction() }
+            )
+        }
+        sendSimpleMessageToHomeFragment(OBSERVER_RECONNECTING)
+        state = OBSERVER_STATE_RELOADING
+    }
+
+    private suspend fun observerReconnectFailAction() {
+        sendSimpleMessageToHomeFragment(OBSERVER_RECONNECT_FAIL)
+        delay(RECONNECT_INTERVAL)
+        if (!isReconnectCanceled)
+            reconnectObserverToServer()
+    }
+
+    private fun observerReconnectSuccessAction() {
+        sendSimpleMessageToHomeFragment(OBSERVER_RECONNECT_SUCCESS)
+        loginObserver()
+    }
+
     private fun observerConnectSuccessAction() {
         sendSimpleMessageToHomeFragment(OBSERVER_CONNECT_SUCCESS)
         loginObserver()
@@ -931,22 +966,20 @@ class MainService : Service() {
     }
 
     private fun observerDisconnectAction() {
+        isReconnectCanceled = false
         sendSimpleMessageToHomeFragment(DISCONNECT)
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-        isServiceStarted = false
         notificationManager.notify(
             NOTIFICATION_ID,
             createNotification(
                 getString(R.string.app_name),
-                getString(R.string.disconnect_msg),
+                getString(R.string.reconnecting_msg),
                 false
             )
         )
-        isServiceStarted = false
         isObserverLogIn = false
         isObserverTrackStarted = false
         state = STATE_DISABLE
-        observerTargets.clear()
+        reconnectObserverToServer()
     }
 
     private fun observerSendMessageFailAction(type: WebSocketDataType) {
@@ -1020,6 +1053,24 @@ class MainService : Service() {
         observerTargets.clear()
     }
 
+    private fun observerCancelReconnect() {
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        notificationManager.notify(
+            NOTIFICATION_ID,
+            createNotification(
+                getString(R.string.app_name),
+                getString(R.string.cancel_observe_msg),
+                false
+            )
+        )
+        disconnectServer()
+        isServiceStarted = false
+        isObserverLogIn = false
+        state = STATE_DISABLE
+        observerTargets.clear()
+        isReconnectCanceled = true
+    }
+
 
     private inner class Handler : android.os.Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
@@ -1069,6 +1120,10 @@ class MainService : Service() {
 
                 CANCEL_RECONNECT_OBSERVABLE -> {
                     observableCancelReconnect()
+                }
+
+                CANCEL_RECONNECT_OBSERVER -> {
+                    observerCancelReconnect()
                 }
 
                 else -> super.handleMessage(msg)

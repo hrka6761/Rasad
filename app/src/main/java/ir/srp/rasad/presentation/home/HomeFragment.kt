@@ -1,7 +1,6 @@
 package ir.srp.rasad.presentation.home
 
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context.BIND_AUTO_CREATE
@@ -33,6 +32,7 @@ import ir.srp.rasad.core.BaseFragment
 import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVABLE
+import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVER
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
@@ -74,6 +74,9 @@ import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_RECEIVE_DATA
+import ir.srp.rasad.core.Constants.OBSERVER_RECONNECTING
+import ir.srp.rasad.core.Constants.OBSERVER_RECONNECT_FAIL
+import ir.srp.rasad.core.Constants.OBSERVER_RECONNECT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_SENDING_REQUEST_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_SUCCESS
@@ -81,6 +84,7 @@ import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_RECEIVING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVER_REQUEST_LAST_RECEIVED_DATA
+import ir.srp.rasad.core.Constants.OBSERVER_STATE_RELOADING
 import ir.srp.rasad.core.Constants.SERVICE_BUNDLE_KEY
 import ir.srp.rasad.core.Constants.SERVICE_DATA_KEY
 import ir.srp.rasad.core.Constants.SERVICE_STATE
@@ -109,7 +113,7 @@ import org.neshan.mapsdk.internal.utils.BitmapUtils
 import org.neshan.mapsdk.model.Marker
 import javax.inject.Inject
 
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "HandlerLeak")
 @RequiresApi(S)
 @AndroidEntryPoint
 class HomeFragment : BaseFragment(), RequestTargetListener {
@@ -561,13 +565,13 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         binding.onOffFab.setImageResource(R.drawable.powering)
         binding.waitingTxt.text = getString(R.string.reconnecting_msg)
         binding.cancelWaitingBtn.visibility = View.VISIBLE
-        binding.cancelWaitingBtn.setOnClickListener { onClickCancelReconnect() }
+        binding.cancelWaitingBtn.setOnClickListener { onClickCancelReconnectObservable() }
         disableViews()
     }
 
-    private fun onClickCancelReconnect() {
+    private fun onClickCancelReconnectObservable() {
         isServiceStarted = false
-        isObserverLogIn = false
+        isObservableLogIn = false
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.waitingTxt.text = getString(R.string.txt_waiting)
         binding.onOffFab.setImageResource(R.drawable.power_off)
@@ -703,6 +707,32 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         return icon
     }
 
+    private fun observerReconnectingActions() {
+        binding.waitingTxt.text = getString(R.string.reconnecting_msg)
+        binding.cancelWaitingBtn.visibility = View.VISIBLE
+        binding.cancelWaitingBtn.setOnClickListener { onClickCancelReconnectObserver() }
+        disableViews()
+    }
+
+    private fun onClickCancelReconnectObserver() {
+        isObserverTrackStarted = false
+        isObserverLogIn = false
+        isServiceStarted = false
+        binding.cancelWaitingBtn.visibility = View.GONE
+        binding.waitingTxt.text = getString(R.string.txt_waiting)
+        enableViews()
+        val msg = Message.obtain(null, CANCEL_RECONNECT_OBSERVER)
+        homeMessenger?.send(msg)
+    }
+
+    private fun observerReconnectSuccessActions() {
+
+    }
+
+    private fun observerReconnectFailActions() {
+
+    }
+
 
     private fun disconnectAction() {
         isServiceStarted = false
@@ -744,7 +774,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     private fun processAppState(state: Int) {
         when (state) {
-            STATE_DISABLE -> {}
+            STATE_DISABLE -> {
+
+            }
+
             OBSERVER_STATE_LOADING -> {
                 disableViews()
             }
@@ -771,7 +804,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 disableViews()
             }
 
-            OBSERVABLE_STATE_READY -> {}
+            OBSERVABLE_STATE_READY -> {
+
+            }
+
             OBSERVABLE_STATE_PERMISSION_REQUEST -> {
                 val requestPermissionDataMsg =
                     Message.obtain(null, OBSERVABLE_GET_PERMISSION_DATA)
@@ -788,6 +824,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
             OBSERVABLE_STATE_RELOADING -> {
                 observableReconnectingActions()
+            }
+
+            OBSERVER_STATE_RELOADING -> {
+                observerReconnectingActions()
             }
         }
     }
@@ -834,7 +874,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         }
     }
 
-    @SuppressLint("HandlerLeak")
     private inner class Handler : android.os.Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             when (msg.what) {
@@ -995,6 +1034,18 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
                 OBSERVER_FAILURE -> {
                     failedObserveAction(msg.obj as ErrorDataModel)
+                }
+
+                OBSERVER_RECONNECTING -> {
+                    observerReconnectingActions()
+                }
+
+                OBSERVER_RECONNECT_SUCCESS -> {
+                    observerReconnectSuccessActions()
+                }
+
+                OBSERVER_RECONNECT_FAIL -> {
+                    observerReconnectFailActions()
                 }
 
                 else -> super.handleMessage(msg)
