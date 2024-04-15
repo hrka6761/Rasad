@@ -571,6 +571,7 @@ class MainService : Service() {
 
     private fun observableReconnectSuccessAction() {
         sendSimpleMessageToHomeFragment(OBSERVABLE_RECONNECT_SUCCESS)
+        sendSimpleMessageToHomeFragment(OBSERVABLE_ADDED_NEW_OBSERVER, observableTargets)
         loginObservable()
     }
 
