@@ -1,6 +1,6 @@
 package ir.srp.rasad.data.repositories
 
-import ir.srp.rasad.core.Constants.TARGETS_KEY
+import ir.srp.rasad.core.Constants.SAVED_TARGETS_KEY
 import ir.srp.rasad.core.Constants.USER_ACCOUNT_INFO_KEY
 import ir.srp.rasad.core.Constants.USER_STATE_KEY
 import ir.srp.rasad.core.Resource
@@ -58,12 +58,12 @@ class LocalUserDataRepoImpl @Inject constructor(
             targetsString.add(targetString)
         }
 
-        userLocalDataSource.saveSet(TARGETS_KEY, targetsString)
+        userLocalDataSource.saveSet(SAVED_TARGETS_KEY, targetsString)
     }
 
     override suspend fun loadUserTargets(): Resource<HashSet<TargetModel>?> {
         val targetsModel = HashSet<TargetModel>()
-        val targetsString = userLocalDataSource.loadSet(TARGETS_KEY, null)
+        val targetsString = userLocalDataSource.loadSet(SAVED_TARGETS_KEY, null)
 
         return if (targetsString != null) {
             for (target in targetsString) {

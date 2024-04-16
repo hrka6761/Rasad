@@ -5,6 +5,8 @@ object Constants {
     const val HTTP_BASE_URL = "http://srp-rasad.ir:30001/api/user/"
     const val WEBSOCKET_URL = "ws://srp-rasad.ir:30002"
 
+    const val NOTIFICATION_CHANNEL_ID = "Rasad"
+    const val NOTIFICATION_ID = 110
     const val MOBILE_KEY = "mobile"
     const val USER_STATE_KEY = "userAccountState"
     const val USER_ACCOUNT_INFO_KEY = "userAccountInfo"
@@ -25,7 +27,7 @@ object Constants {
     const val DENY_PERMISSION_ACTION = "deny_permission"
     const val CLOSE_WEBSOCKET_STATUS_CODE = 1000
     const val CLOSE_WEBSOCKET_STATUS_REASON = "disconnect"
-    const val TARGETS_KEY = "targets"
+    const val SAVED_TARGETS_KEY = "savedTargets"
     const val GET_OBSERVER_REQ_TYPE = "getObservers"
     const val ADD_OBSERVER_REQ_TYPE = "addObserver"
     const val RECONNECT_INTERVAL = 3000L
@@ -58,6 +60,7 @@ object Constants {
     const val OBSERVABLE_DENY_PERMISSION_FAIL = 16
     const val OBSERVABLE_DENY_PERMISSION_SUCCESS = 17
     const val OBSERVABLE_SEND_DATA_SUCCESS = 18
+    const val OBSERVABLE_SEND_DATA_FAIL = 120
     const val OBSERVABLE_GET_PERMISSION_DATA = 19
     const val OBSERVABLE_ADDED_NEW_OBSERVER = 20
     const val OBSERVABLE_DISCONNECT_ALL_TARGETS = 21
