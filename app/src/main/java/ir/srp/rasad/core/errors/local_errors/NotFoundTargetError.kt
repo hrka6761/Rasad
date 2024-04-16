@@ -16,7 +16,7 @@ class NotFoundTargetError @Inject constructor() : Error {
         val bottomSheet = (fragment as HomeFragment).trackUserBottomSheet
         val args = Bundle()
         val targets = arrayOf<TargetModel>()
-        args.putParcelableArray(Constants.TARGETS_KEY, targets)
+        args.putParcelableArray(Constants.SAVED_TARGETS_KEY, targets)
         bottomSheet.arguments = args
         bottomSheet.show(fragment.requireActivity().supportFragmentManager, bottomSheet.tag)
     }
