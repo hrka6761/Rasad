@@ -31,6 +31,7 @@ object Constants {
     const val GET_OBSERVER_REQ_TYPE = "getObservers"
     const val ADD_OBSERVER_REQ_TYPE = "addObserver"
     const val RECONNECT_INTERVAL = 3000L
+    const val LOCATION_OFF_DIALOG_LABEL = "locationDialog"
 
     const val LOCATION_PERMISSION_TYPE_CHANGES = 5
     const val LOCATION_PERMISSION_TYPE_EVERY_5_M = 300
@@ -42,6 +43,7 @@ object Constants {
     const val MESSENGER_TRANSFORMATION = 0
     const val SERVICE_STATE = 1
     const val APP_STATE = 2
+    const val LOCATION_STATE = 57
 
     const val DISCONNECT = 3
 

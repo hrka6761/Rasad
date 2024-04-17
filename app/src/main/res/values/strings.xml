@@ -66,6 +66,9 @@
     <string name="snackbar_not_selected_targets">Please select your targets</string>
     <string name="snackbar_not_found_observer">The observer was not found</string>
     <string name="snackbar_empty_observer">Please fill the username</string>
+    <string name="snackbar_grant_success">You Grant permission for %1$s successfully.</string>
+    <string name="snackbar_grant_failed">Failed to send permission response !!!</string>
+    <string name="snackbar_deny_fail">Failed to send permission response !!!</string>
 
     <string name="dialog_notification_dialog_msg">You need to grant notification permission to display app operations when you closing the app.</string>
     <string name="dialog_basic_location_dialog_msg">You need to grant location permission for the app to access your current location.</string>
@@ -102,6 +105,7 @@
     <string name="permission_extend_notification_msg1">%1$s want to track your location when it changes.\nAre you ok ?</string>
     <string name="permission_extend_notification_msg2">%1$s want to track your location every %2$s minutes.\nAre you ok ?</string>
     <string name="permission_collapse_notification_msg">Incoming Request permission from %1$s.</string>
+    <string name="location_off_msg">App is paused !!!\nTurn on location …</string>
 
     <string name="location">location</string>
 </resources>

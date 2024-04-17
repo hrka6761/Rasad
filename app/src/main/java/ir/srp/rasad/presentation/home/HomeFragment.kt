@@ -1,11 +1,12 @@
 package ir.srp.rasad.presentation.home
 
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-import android.app.AlertDialog
 import android.content.ComponentName
+import android.content.Context
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.location.LocationManager
 import android.os.Build.VERSION_CODES.TIRAMISU
 import android.os.Bundle
 import android.os.Handler
@@ -14,8 +15,7 @@ import android.os.Looper
 import android.os.Message
 import android.os.Messenger
 import android.os.Parcelable
-import ir.srp.rasad.core.Constants.COARSE_RESULT_KEY
-import ir.srp.rasad.core.Constants.FINE_RESULT_KEY
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -33,27 +33,30 @@ import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVABLE
 import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVER
+import ir.srp.rasad.core.Constants.COARSE_RESULT_KEY
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
+import ir.srp.rasad.core.Constants.FINE_RESULT_KEY
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
-import ir.srp.rasad.core.Constants.OBSERVER_LAST_RECEIVED_DATA
+import ir.srp.rasad.core.Constants.LOCATION_OFF_DIALOG_LABEL
+import ir.srp.rasad.core.Constants.LOCATION_STATE
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
 import ir.srp.rasad.core.Constants.OBSERVABLE_ADDED_NEW_OBSERVER
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_CONNECT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_DENY_PERMISSION_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_DENY_PERMISSION_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVABLE_DISCONNECT_ALL_TARGETS
+import ir.srp.rasad.core.Constants.OBSERVABLE_GET_PERMISSION_DATA
+import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_FAIL
+import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGIN_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_LOGOUT_SUCCESS
-import ir.srp.rasad.core.Constants.OBSERVABLE_DENY_PERMISSION_SUCCESS
-import ir.srp.rasad.core.Constants.OBSERVABLE_DISCONNECT_ALL_TARGETS
-import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_FAIL
-import ir.srp.rasad.core.Constants.OBSERVABLE_GRANT_PERMISSION_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECEIVE_REQUEST_PERMISSION
-import ir.srp.rasad.core.Constants.OBSERVABLE_GET_PERMISSION_DATA
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECONNECTING
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVABLE_RECONNECT_SUCCESS
@@ -71,6 +74,7 @@ import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_DISCONNECT_ALL_TARGETS
 import ir.srp.rasad.core.Constants.OBSERVER_FAILURE
+import ir.srp.rasad.core.Constants.OBSERVER_LAST_RECEIVED_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_STATE
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_SUCCESS
@@ -78,14 +82,15 @@ import ir.srp.rasad.core.Constants.OBSERVER_RECEIVE_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_RECONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_RECONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_RECONNECT_SUCCESS
+import ir.srp.rasad.core.Constants.OBSERVER_REQUEST_LAST_RECEIVED_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_SENDING_REQUEST_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_SEND_REQUEST_DATA_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_LOADING
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_RECEIVING_DATA
-import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
-import ir.srp.rasad.core.Constants.OBSERVER_REQUEST_LAST_RECEIVED_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_RELOADING
+import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
+import ir.srp.rasad.core.Constants.SAVED_TARGETS_KEY
 import ir.srp.rasad.core.Constants.SERVICE_BUNDLE_KEY
 import ir.srp.rasad.core.Constants.SERVICE_DATA_KEY
 import ir.srp.rasad.core.Constants.SERVICE_STATE
@@ -94,8 +99,9 @@ import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
 import ir.srp.rasad.core.Constants.STATE_DISABLE
 import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
-import ir.srp.rasad.core.Constants.SAVED_TARGETS_KEY
 import ir.srp.rasad.core.Resource
+import ir.srp.rasad.core.utils.Dialog.dialogLabel
+import ir.srp.rasad.core.utils.Dialog.hideSimpleDialog
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
 import ir.srp.rasad.core.utils.JsonConverter
 import ir.srp.rasad.core.utils.MessageViewer.showError
@@ -113,6 +119,7 @@ import org.neshan.common.model.LatLng
 import org.neshan.mapsdk.internal.utils.BitmapUtils
 import org.neshan.mapsdk.model.Marker
 import javax.inject.Inject
+
 
 @Suppress(
     "UNCHECKED_CAST",
@@ -133,7 +140,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
      * @param savedTargets
      * @param trackUserBottomSheet
      * @param marker
-     * @param permissionDialog
      * @param isServiceBound Specifies whether HomeFragment is bound to the MainService or not.
      * @param isServiceStarted Specifies whether the service is started or stopped.
      * @param isObservableLogIn Specifies whether the observable is logged in to the server or logged out from the server.
@@ -153,7 +159,8 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private lateinit var savedTargets: HashSet<TargetModel>
     val trackUserBottomSheet = TrackUserBottomSheet(this)
     private var marker: Marker? = null
-    private var permissionDialog: AlertDialog? = null
+    private lateinit var locationManager: LocationManager
+
 
     //State params
     private var isServiceBound = false
@@ -168,6 +175,8 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
         permissionManager = PermissionManager(this, PermissionsRequestCallback())
         serviceMessenger = Messenger(ServiceMessengerHandler())
+        locationManager =
+            requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
     override fun onCreateView(
@@ -182,7 +191,14 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         initialize()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        checkLocationState()
     }
 
     override fun onDestroy() {
@@ -211,6 +227,18 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         initSettingsButton()
         initTrackMeButton()
         initTrackOtherButton()
+    }
+
+    private fun checkLocationState() {
+        if (!locationManager.isLocationEnabled && activity?.isFinishing == false)
+            showSimpleDialog(
+                context = requireContext(),
+                msg = "Location is off\nYou have to turn on it.",
+                negativeButton = "",
+                positiveButton = "Turn on location",
+                negativeAction = {},
+                positiveAction = { openLocationSettings() }
+            )
     }
 
     private fun initGetSavedTargetsResult() {
@@ -335,7 +363,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun showTrackUserSheet() {
-        if (!permissionManager.hasNotificationPermission()) {
+        if (!permissionManager.hasNotificationPermission() && activity?.isFinishing == false) {
             showSimpleDialog(
                 context = requireContext(),
                 msg = getString(R.string.dialog_notification_dialog_msg),
@@ -462,6 +490,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     // Observable functions ------------------------------------------------------------------------
 
+
     /**
      * Connecting
      */
@@ -546,35 +575,39 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         }
 
         val msg = if (interval == 0)
-            "${data.username} want to track your location when it changes.\nAre you ok ?"
+            getString(R.string.permission_extend_notification_msg1, data.username)
         else
-            "${data.username} want to track your location every $interval minutes.\nAre you ok ?"
+            getString(
+                R.string.permission_extend_notification_msg2,
+                data.username,
+                interval.toString()
+            )
 
-        permissionDialog = showSimpleDialog(
-            context = requireContext(),
-            msg = msg,
-            negativeAction = { _ ->
-                startServiceWithAction(DENY_PERMISSION_ACTION)
-            },
-            positiveAction = { _ ->
-                startServiceWithAction(GRANT_PERMISSION_ACTION)
-            }
-        )
+        if (activity?.isFinishing == false)
+            showSimpleDialog(
+                context = requireContext(),
+                msg = msg,
+                negativeAction = { _ ->
+                    startServiceWithAction(DENY_PERMISSION_ACTION)
+                },
+                positiveAction = { _ ->
+                    startServiceWithAction(GRANT_PERMISSION_ACTION)
+                }
+            )
     }
 
     /**
      * Sending response (Grant or Deny)
      */
     private fun observableSendingPermissionResponseAction() {
-        permissionDialog?.dismiss()
-        permissionDialog = null
+        hideSimpleDialog()
     }
 
     /**
      * Grant success
      */
     private fun observableGrantPermissionSuccessAction(target: String) {
-        showMessage(this, "You Grant permission for $target successfully.")
+        showMessage(this, getString(R.string.snackbar_grant_success, target))
     }
 
     /**
@@ -582,7 +615,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
      */
     private fun observableGrantPermissionFailAction(data: WebsocketDataModel) {
         observableReceiveRequestPermissionAction(data)
-        showError(this, "Failed to send permission response !!!")
+        showError(this, getString(R.string.snackbar_grant_failed))
     }
 
     /**
@@ -596,7 +629,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
      * Deny fail
      */
     private fun observableDenyPermissionFailAction() {
-        showError(this, "Failed to send permission response !!!")
+        showError(this, getString(R.string.snackbar_deny_fail))
     }
 
     /**
@@ -667,6 +700,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
 
     // Observer functions --------------------------------------------------------------------------
+
 
     /**
      * Connecting
@@ -898,7 +932,8 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         isObservableLogIn = false
         isObserverLogIn = false
         isObserverTrackStarted = false
-        permissionDialog?.dismiss()
+        if (dialogLabel != LOCATION_OFF_DIALOG_LABEL)
+            hideSimpleDialog()
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.addMemberFab.setIconResource(R.drawable.add)
         if (marker != null) {
@@ -913,6 +948,29 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         enableObservable()
         enableObserver()
         enableViews()
+    }
+
+    private fun locationChangeStateAction(isLocationEnable: Boolean) {
+
+        if (isLocationEnable) {
+            hideSimpleDialog()
+        } else {
+            if (activity?.isFinishing == false)
+                showSimpleDialog(
+                    label = LOCATION_OFF_DIALOG_LABEL,
+                    context = requireContext(),
+                    msg = "Location is off\nYou have to turn on it.",
+                    negativeButton = "",
+                    positiveButton = "Turn on location",
+                    negativeAction = { requireActivity().finish() },
+                    positiveAction = { openLocationSettings() }
+                )
+        }
+    }
+
+    private fun openLocationSettings() {
+        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+        requireContext().startActivity(intent)
     }
 
     private fun processAppState(state: Int) {
@@ -953,6 +1011,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             }
 
             OBSERVABLE_STATE_PERMISSION_REQUEST -> {
+                binding.onOffFab.setImageResource(R.drawable.power_on)
                 val requestPermissionDataMsg =
                     Message.obtain(null, OBSERVABLE_GET_PERMISSION_DATA)
                 homeMessenger?.send(requestPermissionDataMsg)
@@ -962,6 +1021,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             }
 
             OBSERVABLE_STATE_SENDING_DATA -> {
+                binding.onOffFab.setImageResource(R.drawable.power_on)
                 val msg = Message.obtain(null, OBSERVABLE_REQUEST_TARGETS)
                 homeMessenger?.send(msg)
             }
@@ -1040,6 +1100,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
                 DISCONNECT -> {
                     disconnectAction()
+                }
+
+                LOCATION_STATE -> {
+                    locationChangeStateAction(msg.obj as Boolean)
                 }
 
 

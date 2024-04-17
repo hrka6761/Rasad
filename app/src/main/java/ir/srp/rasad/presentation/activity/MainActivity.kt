@@ -27,6 +27,15 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
 
+        initialize()
+    }
+
+
+    private fun initialize() {
+        initNavigationDestination()
+    }
+
+    private fun initNavigationDestination() {
         if (viewModel.getUserState())
             navController.navigate(R.id.homeFragment)
     }

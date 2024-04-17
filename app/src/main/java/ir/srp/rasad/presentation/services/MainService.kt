@@ -7,7 +7,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
+import android.location.LocationManager
 import android.os.Build
 import android.os.Build.VERSION_CODES.S
 import android.os.Bundle
@@ -34,6 +36,7 @@ import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVER
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
+import ir.srp.rasad.core.Constants.LOCATION_STATE
 import ir.srp.rasad.core.Constants.OBSERVER_LAST_RECEIVED_DATA
 import ir.srp.rasad.core.Constants.MESSENGER_TRANSFORMATION
 import ir.srp.rasad.core.Constants.NOTIFICATION_CHANNEL_ID
@@ -99,6 +102,7 @@ import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVER
 import ir.srp.rasad.core.Constants.WEBSOCKET_URL
 import ir.srp.rasad.core.WebSocketDataType
 import ir.srp.rasad.core.utils.JsonConverter
+import ir.srp.rasad.data.receivers.LocationStateReceiver
 import ir.srp.rasad.domain.models.DataModel
 import ir.srp.rasad.domain.models.ErrorDataModel
 import ir.srp.rasad.domain.models.TargetModel
@@ -160,6 +164,8 @@ class MainService : Service() {
     private lateinit var notificationChannel: NotificationChannel
     private var serviceMessenger: Messenger? = null
     private lateinit var homeMessenger: Messenger
+    private lateinit var locationStateReceiver: LocationStateReceiver
+    private val intentFilter = IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION)
 
     @Named("IO")
     @Inject
@@ -208,7 +214,10 @@ class MainService : Service() {
             }
         }
         homeMessenger = Messenger(HomeMessengerHandler())
+        locationStateReceiver = LocationStateReceiver { locationStateChangeAction(it) }
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        registerReceiver(locationStateReceiver, intentFilter)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -225,9 +234,46 @@ class MainService : Service() {
         return homeMessenger.binder
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(locationStateReceiver)
+    }
+
 
     // Common functions ----------------------------------------------------------------------------
 
+
+    private fun locationStateChangeAction(isLocationEnable: Boolean) {
+        sendMessageToHome(LOCATION_STATE, isLocationEnable)
+        if (isLocationEnable) {
+            when (appState) {
+                OBSERVABLE_STATE_PERMISSION_REQUEST -> {
+                    requestPermissionData?.let { observableReceiveRequestPermission(it) }
+                }
+
+                else -> {
+                    notificationManager.notify(
+                        NOTIFICATION_ID,
+                        createSimpleNotification(
+                            getString(R.string.app_name),
+                            getString(R.string.observable_login_success_msg),
+                            true
+                        )
+                    )
+                }
+            }
+        } else {
+            if (appState != STATE_DISABLE)
+                notificationManager.notify(
+                    NOTIFICATION_ID,
+                    createSimpleNotification(
+                        getString(R.string.app_name),
+                        getString(R.string.location_off_msg),
+                        true
+                    )
+                )
+        }
+    }
 
     private fun createNotificationChannel() {
         notificationChannel = NotificationChannel(
@@ -373,7 +419,7 @@ class MainService : Service() {
                     }
 
                     WebSocketDataType.Data.name -> {
-                        observableSendDataSuccessAction()
+                        observableSendDataSuccessAction(textData)
                     }
                 }
             }
@@ -729,8 +775,10 @@ class MainService : Service() {
     }
 
     private fun observableReconnectSuccessAction() {
+        appState = OBSERVABLE_STATE_SENDING_DATA
         sendMessageToHome(OBSERVABLE_RECONNECT_SUCCESS)
-        sendMessageToHome(OBSERVABLE_ADDED_NEW_OBSERVER, observableTargets)
+        if (observableTargets.size > 0)
+            sendMessageToHome(OBSERVABLE_ADDED_NEW_OBSERVER, observableTargets)
         observableLogin()
     }
 
@@ -744,7 +792,8 @@ class MainService : Service() {
     private fun observableLoginSuccessAction() {
         sendMessageToHome(OBSERVABLE_LOGIN_SUCCESS)
         isObservableLogIn = true
-        appState = OBSERVABLE_STATE_READY
+        if (appState != OBSERVABLE_STATE_SENDING_DATA)
+            appState = OBSERVABLE_STATE_READY
         notificationManager.notify(
             NOTIFICATION_ID,
             createSimpleNotification(
@@ -803,8 +852,8 @@ class MainService : Service() {
         )
     }
 
-    private fun observableSendDataSuccessAction() {
-        sendMessageToHome(OBSERVABLE_SEND_DATA_SUCCESS)
+    private fun observableSendDataSuccessAction(textData: String) {
+        sendMessageToHome(OBSERVABLE_SEND_DATA_SUCCESS, textData)
     }
 
     private fun observableSendDataFailAction() {
