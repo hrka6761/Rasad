@@ -14,6 +14,7 @@ import ir.srp.rasad.core.utils.Validation.checkUsernameValidation
 import ir.srp.rasad.core.utils.Validation.isEmailValid
 import ir.srp.rasad.databinding.EditProfileBottomSheetLayoutBinding
 
+@SuppressLint("StringFormatInvalid")
 class EditProfileBottomSheet(
     private val listener: EditCLickListener,
 ) : BottomSheetDialogFragment() {
@@ -62,7 +63,6 @@ class EditProfileBottomSheet(
         binding.fieldEdtl.hint = args.getString(EDIT_PROFILE_KEY)
     }
 
-    @SuppressLint("StringFormatInvalid")
     private fun initButton() {
         binding.updateBtn.text =
             getString(R.string.btn_txt_update, args.getString(EDIT_PROFILE_KEY))
@@ -82,11 +82,13 @@ class EditProfileBottomSheet(
         }
 
         if (args.getString(EDIT_PROFILE_KEY) == USERNAME_ARG_VALUE) {
-            if (checkUsernameValidation(fieldText).isEmpty()) {
+            val usernameValidationErrorMsg = checkUsernameValidation(fieldText)
+
+            if (usernameValidationErrorMsg.isEmpty()) {
                 binding.fieldEdt.text?.clear()
                 listener.onEditUsername(fieldText)
             } else
-                showError(this, getString(R.string.snackbar_invalid_username))
+                showError(this, usernameValidationErrorMsg)
         } else {
             if (isEmailValid(fieldText)) {
                 binding.fieldEdt.text?.clear()

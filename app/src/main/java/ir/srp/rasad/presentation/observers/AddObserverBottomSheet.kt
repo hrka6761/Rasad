@@ -49,10 +49,12 @@ class AddObserverBottomSheet(
             return
         }
 
-        if (checkUsernameValidation(username).isEmpty()) {
+        val usernameValidationErrorMsg = checkUsernameValidation(username)
+
+        if (usernameValidationErrorMsg.isEmpty()) {
             listener.onClickAddObserver(username)
             binding.usernameEdt.text?.clear()
         } else
-            showError(this, getString(R.string.snackbar_invalid_username))
+            showError(this, usernameValidationErrorMsg)
     }
 }

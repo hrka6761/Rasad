@@ -11,7 +11,7 @@ import android.widget.AdapterView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import ir.srp.rasad.R
-import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_CHANGES
+import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_5_S
 import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_1_D
 import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_1_H
 import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_30_M
@@ -21,6 +21,7 @@ import ir.srp.rasad.core.Constants.SAVED_TARGETS_KEY
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
 import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.utils.TargetPermissionType
+import ir.srp.rasad.core.utils.Validation.checkUsernameValidation
 import ir.srp.rasad.databinding.TrackUserBottomSheetLayoutBinding
 import ir.srp.rasad.domain.models.TargetModel
 import ir.srp.rasad.domain.models.TargetPermissionsModel
@@ -153,6 +154,14 @@ class TrackUserBottomSheet(
                 return
             }
 
+            val usernameValidationErrorMsg =
+                checkUsernameValidation(binding.targetEdt.text.toString())
+
+            if (usernameValidationErrorMsg.isNotEmpty()) {
+                showError(this, usernameValidationErrorMsg)
+                return
+            }
+
             if (locationSendingInterval == -1) {
                 showError(this, getString(R.string.snackbar_not_selected_location_interval))
                 return
@@ -219,7 +228,7 @@ class TrackUserBottomSheet(
         ) {
             locationSendingInterval = when (position) {
                 0 -> -1
-                1 -> LOCATION_PERMISSION_TYPE_CHANGES
+                1 -> LOCATION_PERMISSION_TYPE_EVERY_5_S
                 2 -> LOCATION_PERMISSION_TYPE_EVERY_5_M
                 3 -> LOCATION_PERMISSION_TYPE_EVERY_30_M
                 4 -> LOCATION_PERMISSION_TYPE_EVERY_1_H

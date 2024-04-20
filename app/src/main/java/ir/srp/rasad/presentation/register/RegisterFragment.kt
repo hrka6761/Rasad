@@ -134,8 +134,11 @@ class RegisterFragment : BaseFragment() {
             showError(this, getString(R.string.snackbar_empty_username))
             return
         }
-        if (checkUsernameValidation(username).isNotEmpty()) {
-            showError(this, getString(R.string.snackbar_invalid_username))
+
+        val usernameValidationErrorMsg = checkUsernameValidation(username)
+
+        if (usernameValidationErrorMsg.isNotEmpty()) {
+            showError(this, usernameValidationErrorMsg)
             return
         }
         if (email.isNotEmpty())

@@ -35,24 +35,22 @@ object Validation {
     }
 
     fun checkUsernameValidation(username: String): String {
-        val result = StringBuilder("")
-
         if (username.length >= 60)
-            result.append("* Must be less than 60 characters")
+            return "Username must be less than 60 characters"
 
         if (username.length < 8)
-            result.append("\n* Must be more than 8 characters")
+            return "Username must be more than 8 characters"
 
         if (!lowercaseRegex.containsMatchIn(username))
-            result.append("\n* Must have at least one lowercase letter")
+            return "Username must have at least one lowercase letter"
 
         if (!uppercaseRegex.containsMatchIn(username))
-            result.append("\n* Must have at least one uppercase letter")
+            return "Username must have at least one uppercase letter"
 
         if (!numberRegex.containsMatchIn(username))
-            result.append("\n* Must contain number")
+            return "Username must contain number"
 
-        return result.toString()
+        return ""
     }
 
     fun isEmailValid(email: String): Boolean {
