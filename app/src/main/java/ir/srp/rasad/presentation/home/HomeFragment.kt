@@ -161,7 +161,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private var marker: Marker? = null
     private lateinit var locationManager: LocationManager
 
-
     //State params
     private var isServiceBound = false
     private var isServiceStarted = false
@@ -230,15 +229,17 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun checkLocationState() {
-        if (!locationManager.isLocationEnabled && activity?.isFinishing == false)
-            showSimpleDialog(
-                context = requireContext(),
-                msg = "Location is off\nYou have to turn on it.",
-                negativeButton = "",
-                positiveButton = "Turn on location",
-                negativeAction = {},
-                positiveAction = { openLocationSettings() }
-            )
+        if (!locationManager.isLocationEnabled)
+            activity?.let {
+                showSimpleDialog(
+                    activity = it,
+                    msg = "Location is off\nYou have to turn on it.",
+                    negativeButton = "",
+                    positiveButton = "Turn on location",
+                    negativeAction = {},
+                    positiveAction = { openLocationSettings() }
+                )
+            }
     }
 
     private fun initGetSavedTargetsResult() {
@@ -297,51 +298,60 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         if (!permissionManager.hasPreciseLocationPermission() &&
             !permissionManager.hasApproximateLocationPermission()
         ) {
-            showSimpleDialog(
-                context = requireContext(),
-                msg = getString(R.string.dialog_basic_location_dialog_msg),
-                negativeAction = { dialog ->
-                    showWarning(
-                        this,
-                        getString(R.string.snackbar_approximate_location_negative_msg)
-                    )
-                    dialog.dismiss()
-                },
-                positiveAction = { _ ->
-                    permissionManager.getBasicLocationPermission()
-                }
-            )
+            activity?.let {
+                showSimpleDialog(
+                    activity = it,
+                    msg = getString(R.string.dialog_basic_location_dialog_msg),
+                    negativeAction = { dialog ->
+                        showWarning(
+                            this,
+                            getString(R.string.snackbar_approximate_location_negative_msg)
+                        )
+                        dialog.dismiss()
+                    },
+                    positiveAction = { _ ->
+                        permissionManager.getBasicLocationPermission()
+                    }
+                )
+            }
 
             return
         }
 
         if (!permissionManager.hasBackgroundLocationPermission()) {
-            showSimpleDialog(
-                context = requireContext(),
-                msg = getString(R.string.dialog_background_location_dialog_msg),
-                negativeAction = { dialog ->
-                    showWarning(this, getString(R.string.snackbar_background_location_negative_msg))
-                    dialog.dismiss()
-                }, positiveAction = { _ ->
-                    permissionManager.getBackgroundLocationPermission()
-                }
-            )
+            activity?.let {
+                showSimpleDialog(
+                    activity = it,
+                    msg = getString(R.string.dialog_background_location_dialog_msg),
+                    negativeAction = { dialog ->
+                        showWarning(
+                            this,
+                            getString(R.string.snackbar_background_location_negative_msg)
+                        )
+                        dialog.dismiss()
+                    }, positiveAction = { _ ->
+                        permissionManager.getBackgroundLocationPermission()
+                    }
+                )
+            }
 
             return
         }
 
         if (!permissionManager.hasNotificationPermission()) {
-            showSimpleDialog(
-                context = requireContext(),
-                msg = getString(R.string.dialog_notification_dialog_msg),
-                negativeAction = { dialog ->
-                    showWarning(this, getString(R.string.snackbar_notification_negative_msg))
-                    dialog.dismiss()
-                },
-                positiveAction = { _ ->
-                    permissionManager.getNotificationPermission()
-                }
-            )
+            activity?.let {
+                showSimpleDialog(
+                    activity = it,
+                    msg = getString(R.string.dialog_notification_dialog_msg),
+                    negativeAction = { dialog ->
+                        showWarning(this, getString(R.string.snackbar_notification_negative_msg))
+                        dialog.dismiss()
+                    },
+                    positiveAction = { _ ->
+                        permissionManager.getNotificationPermission()
+                    }
+                )
+            }
 
             return
         }
@@ -363,18 +373,20 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun showTrackUserSheet() {
-        if (!permissionManager.hasNotificationPermission() && activity?.isFinishing == false) {
-            showSimpleDialog(
-                context = requireContext(),
-                msg = getString(R.string.dialog_notification_dialog_msg),
-                negativeAction = { dialog ->
-                    showWarning(this, getString(R.string.snackbar_notification_negative_msg))
-                    dialog.dismiss()
-                },
-                positiveAction = { _ ->
-                    permissionManager.getNotificationPermission()
-                }
-            )
+        if (!permissionManager.hasNotificationPermission()) {
+            activity?.let {
+                showSimpleDialog(
+                    activity = it,
+                    msg = getString(R.string.dialog_notification_dialog_msg),
+                    negativeAction = { dialog ->
+                        showWarning(this, getString(R.string.snackbar_notification_negative_msg))
+                        dialog.dismiss()
+                    },
+                    positiveAction = { _ ->
+                        permissionManager.getNotificationPermission()
+                    }
+                )
+            }
 
             return
         }
@@ -583,9 +595,9 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 interval.toString()
             )
 
-        if (activity?.isFinishing == false)
+        activity?.let {
             showSimpleDialog(
-                context = requireContext(),
+                activity = it,
                 msg = msg,
                 negativeAction = { _ ->
                     startServiceWithAction(DENY_PERMISSION_ACTION)
@@ -594,13 +606,14 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                     startServiceWithAction(GRANT_PERMISSION_ACTION)
                 }
             )
+        }
     }
 
     /**
      * Sending response (Grant or Deny)
      */
     private fun observableSendingPermissionResponseAction() {
-        hideSimpleDialog()
+        activity?.let { hideSimpleDialog(it) }
     }
 
     /**
@@ -933,7 +946,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         isObserverLogIn = false
         isObserverTrackStarted = false
         if (dialogLabel != LOCATION_OFF_DIALOG_LABEL)
-            hideSimpleDialog()
+            activity?.let { hideSimpleDialog(it) }
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.addMemberFab.setIconResource(R.drawable.add)
         if (marker != null) {
@@ -953,18 +966,19 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private fun locationChangeStateAction(isLocationEnable: Boolean) {
 
         if (isLocationEnable) {
-            hideSimpleDialog()
+            activity?.let { hideSimpleDialog(it) }
         } else {
-            if (activity?.isFinishing == false)
+            activity?.let {
                 showSimpleDialog(
                     label = LOCATION_OFF_DIALOG_LABEL,
-                    context = requireContext(),
+                    activity = it,
                     msg = "Location is off\nYou have to turn on it.",
                     negativeButton = "",
                     positiveButton = "Turn on location",
                     negativeAction = { requireActivity().finish() },
                     positiveAction = { openLocationSettings() }
                 )
+            }
         }
     }
 

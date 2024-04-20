@@ -38,7 +38,7 @@ class ObserversFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        adapter = ObserversAdapter(requireContext(), this@ObserversFragment)
+        adapter = ObserversAdapter(requireActivity(), this@ObserversFragment)
     }
 
     override fun onCreateView(

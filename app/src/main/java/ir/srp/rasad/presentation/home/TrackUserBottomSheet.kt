@@ -119,7 +119,7 @@ class TrackUserBottomSheet(
             }
             chip.setOnCloseIconClickListener {
                 showSimpleDialog(
-                    context = requireContext(),
+                    activity = requireActivity(),
                     msg = getString(R.string.dialog_remove_saved_target_msg, chip.text),
                     negativeAction = {},
                     positiveAction = {

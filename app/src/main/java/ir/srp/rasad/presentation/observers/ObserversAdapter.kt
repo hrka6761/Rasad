@@ -1,7 +1,7 @@
 package ir.srp.rasad.presentation.observers
 
 import android.annotation.SuppressLint
-import android.content.Context
+import android.app.Activity
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -11,7 +11,7 @@ import ir.srp.rasad.databinding.ObserverRowBinding
 import ir.srp.rasad.domain.models.PermittedObserversModel
 
 class ObserversAdapter(
-    private val context: Context,
+    private val activity: Activity,
     private val listener: ObserverClickListener,
 ) : RecyclerView.Adapter<ObserversAdapter.ObserverViewHolder>() {
 
@@ -22,7 +22,7 @@ class ObserversAdapter(
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ObserverViewHolder {
-        binding = ObserverRowBinding.inflate(LayoutInflater.from(context), parent, false)
+        binding = ObserverRowBinding.inflate(LayoutInflater.from(activity), parent, false)
 
         return ObserverViewHolder(binding)
     }
@@ -59,8 +59,8 @@ class ObserversAdapter(
 
         private fun onClickDelete(observer: PermittedObserversModel) {
             Dialog.showSimpleDialog(
-                context = context,
-                msg = context.getString(R.string.dialog_delete_observer_permission_msg),
+                activity = activity,
+                msg = activity.getString(R.string.dialog_delete_observer_permission_msg),
                 negativeAction = {},
                 positiveAction = { listener.onClickDelete(observer) }
             )
