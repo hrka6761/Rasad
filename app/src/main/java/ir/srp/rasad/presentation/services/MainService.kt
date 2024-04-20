@@ -167,6 +167,9 @@ class MainService : Service() {
     private lateinit var locationStateReceiver: LocationStateReceiver
     private val intentFilter = IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION)
 
+    @Inject
+    lateinit var locationManager: LocationManager
+
     @Named("IO")
     @Inject
     lateinit var io: CoroutineDispatcher
@@ -182,8 +185,10 @@ class MainService : Service() {
 
     @Inject
     lateinit var jsonConverter: JsonConverter
+
+    @Inject
+    lateinit var fusedLocationClient: FusedLocationProviderClient
     private val locationCallback = getLocationCallback()
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var username: String
     private lateinit var userToken: String
     private lateinit var userId: String
@@ -215,7 +220,6 @@ class MainService : Service() {
         }
         homeMessenger = Messenger(HomeMessengerHandler())
         locationStateReceiver = LocationStateReceiver { locationStateChangeAction(it) }
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         registerReceiver(locationStateReceiver, intentFilter)
     }
@@ -247,11 +251,16 @@ class MainService : Service() {
         sendMessageToHome(LOCATION_STATE, isLocationEnable)
         if (isLocationEnable) {
             when (appState) {
+
                 OBSERVABLE_STATE_PERMISSION_REQUEST -> {
                     requestPermissionData?.let { observableReceiveRequestPermission(it) }
                 }
 
-                else -> {
+                OBSERVABLE_STATE_LOADING -> {
+
+                }
+
+                OBSERVABLE_STATE_READY, OBSERVABLE_STATE_SENDING_DATA, OBSERVABLE_STATE_RELOADING -> {
                     notificationManager.notify(
                         NOTIFICATION_ID,
                         createSimpleNotification(
@@ -263,15 +272,22 @@ class MainService : Service() {
                 }
             }
         } else {
-            if (appState != STATE_DISABLE)
-                notificationManager.notify(
-                    NOTIFICATION_ID,
-                    createSimpleNotification(
-                        getString(R.string.app_name),
-                        getString(R.string.location_off_msg),
-                        true
+            when (appState) {
+                OBSERVABLE_STATE_LOADING,
+                OBSERVABLE_STATE_READY,
+                OBSERVABLE_STATE_SENDING_DATA,
+                OBSERVABLE_STATE_RELOADING,
+                -> {
+                    notificationManager.notify(
+                        NOTIFICATION_ID,
+                        createSimpleNotification(
+                            getString(R.string.app_name),
+                            getString(R.string.location_off_msg),
+                            true
+                        )
                     )
-                )
+                }
+            }
         }
     }
 

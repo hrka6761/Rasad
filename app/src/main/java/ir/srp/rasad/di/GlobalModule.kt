@@ -3,6 +3,9 @@ package ir.srp.rasad.di
 import android.app.NotificationManager
 import android.content.Context
 import android.content.SharedPreferences
+import android.location.LocationManager
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -34,4 +37,14 @@ class GlobalModule {
     @Provides
     fun provideNotificationManager(@ApplicationContext context: Context): NotificationManager =
         context.getSystemService(NotificationManager::class.java)
+
+    @Singleton
+    @Provides
+    fun provideLocationManager(@ApplicationContext context: Context): LocationManager =
+        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+    @Singleton
+    @Provides
+    fun provideFusedLocation(@ApplicationContext context: Context): FusedLocationProviderClient =
+        LocationServices.getFusedLocationProviderClient(context)
 }

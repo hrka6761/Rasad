@@ -159,7 +159,9 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private lateinit var savedTargets: HashSet<TargetModel>
     val trackUserBottomSheet = TrackUserBottomSheet(this)
     private var marker: Marker? = null
-    private lateinit var locationManager: LocationManager
+
+    @Inject
+    lateinit var locationManager: LocationManager
 
     //State params
     private var isServiceBound = false
@@ -174,8 +176,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
         permissionManager = PermissionManager(this, PermissionsRequestCallback())
         serviceMessenger = Messenger(ServiceMessengerHandler())
-        locationManager =
-            requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
     override fun onCreateView(
@@ -192,12 +192,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         super.onViewCreated(view, savedInstanceState)
 
         initialize()
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        checkLocationState()
     }
 
     override fun onDestroy() {
@@ -229,7 +223,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun checkLocationState() {
-        if (!locationManager.isLocationEnabled)
+        if (!locationManager.isLocationEnabled && isObservableLogIn)
             activity?.let {
                 showSimpleDialog(
                     activity = it,
@@ -358,8 +352,23 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
         if (isObservableLogIn)
             startServiceWithParam(STOP_SERVICE_OBSERVABLE)
-        else
+        else {
+            if (!locationManager.isLocationEnabled) {
+                activity?.let {
+                    showSimpleDialog(
+                        activity = it,
+                        msg = "Location is off\nYou have to turn on it.",
+                        positiveButton = "Turn on location",
+                        negativeAction = {},
+                        positiveAction = { openLocationSettings() }
+                    )
+                }
+
+                return
+            }
+
             startServiceWithParam(START_SERVICE_OBSERVABLE)
+        }
 
         disableViews()
     }
@@ -964,20 +973,21 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun locationChangeStateAction(isLocationEnable: Boolean) {
-
         if (isLocationEnable) {
             activity?.let { hideSimpleDialog(it) }
         } else {
-            activity?.let {
-                showSimpleDialog(
-                    label = LOCATION_OFF_DIALOG_LABEL,
-                    activity = it,
-                    msg = "Location is off\nYou have to turn on it.",
-                    negativeButton = "",
-                    positiveButton = "Turn on location",
-                    negativeAction = { requireActivity().finish() },
-                    positiveAction = { openLocationSettings() }
-                )
+            if (isObservableLogIn) {
+                activity?.let {
+                    showSimpleDialog(
+                        label = LOCATION_OFF_DIALOG_LABEL,
+                        activity = it,
+                        msg = "Location is off\nYou have to turn on it.",
+                        negativeButton = "",
+                        positiveButton = "Turn on location",
+                        negativeAction = { requireActivity().finish() },
+                        positiveAction = { openLocationSettings() }
+                    )
+                }
             }
         }
     }
@@ -1102,6 +1112,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
                 OBSERVABLE_LOGIN_STATE -> {
                     isObservableLogIn = msg.obj as Boolean
+                    checkLocationState()
                 }
 
                 OBSERVER_LOGIN_STATE -> {
