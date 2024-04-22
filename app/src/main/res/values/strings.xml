@@ -23,6 +23,7 @@
 
     <string name="txt_login_toolbar_title">Login</string>
     <string name="txt_settings_toolbar_title">Settings</string>
+    <string name="txt_force_run_toolbar_title">Theft</string>
     <string name="txt_observers_toolbar_title">Permitted observers</string>
     <string name="txt_profile_toolbar_title">Profile</string>
     <string name="txt_otp_toolbar_title">Authentication</string>
@@ -33,8 +34,12 @@
     <string name="txt_enter_desc">* Type your mobile number to enter the app.\n  (Pattern: 09123456789)</string>
     <string name="txt_send_otp_desc">* Enter the sent OTP.</string>
     <string name="txt_register_desc">* Enter username and email.\n* Username is require and must be unique.\n* Email is optional.</string>
-    <string name="txt_profile">Edit Profile</string>
-    <string name="txt_observers">Permitted observers</string>
+    <string name="txt_profile">Profile</string>
+    <string name="txt_permitted_observers">Permitted observers</string>
+    <string name="txt_profile_desc">Edit profile info</string>
+    <string name="txt_permitted_observers_desc">Remove permitted observers or grant new observer access</string>
+    <string name="txt_theft">Theft</string>
+    <string name="txt_theft_desc">Enable the app observability remotely</string>
     <string name="txt_account_title">Account</string>
     <string name="txt_no_email">No email</string>
     <string name="txt_email_title">Email</string>
@@ -47,6 +52,7 @@
     <string name="txt_loading_error">Loading Error !!!</string>
     <string name="txt_no_permitted_observer">No permitted observer</string>
     <string name="txt_network_error">Network error !!!</string>
+    <string name="txt_force_run_description">If you want to enable Ability to turn on the observable remotely on this phone, you can enable the force run option.\n\nWith this option, you can run the program remotely by sending an SMS containing a password from the mobile number you specified.\n\nIf you want to turn on this option...\n\n*First:  you have to enter the mobile number you want to send SMS\n*Second:  you have to enter a password (SMS must be contains this password only)</string>
 
     <string name="snackbar_incorrect_mobile_number">The mobile number is not correct.</string>
     <string name="snackbar_incorrect_otp">The code is not correct.</string>

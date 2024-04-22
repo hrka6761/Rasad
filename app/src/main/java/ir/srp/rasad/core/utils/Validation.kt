@@ -14,15 +14,13 @@ object Validation {
 
 
     fun checkMobilNumberValidation(mobileNumber: String): String {
-        val result = StringBuilder("")
-
         if (mobileNumber.length != 11)
-            result.append("Mobile number must be 11 digits")
+            return "Mobile number must be 11 digits"
 
         if (!mobileNumber.startsWith("09"))
-            result.append("Mobile must start with '09'")
+            return "Mobile must start with '09'"
 
-        return result.toString()
+        return ""
     }
 
     fun checkOtpValidation(otp: String): String {
@@ -61,5 +59,24 @@ object Validation {
         val matcher = pattern.matcher(email)
 
         return matcher.matches()
+    }
+
+    fun checkPasswordValidation(password: String): String {
+        if (password.length >= 30)
+            return "Password must be less than 30 characters"
+
+        if (password.length < 16)
+            return "Password must be more than 16 characters"
+
+        if (!lowercaseRegex.containsMatchIn(password))
+            return "Password must have at least one lowercase letter"
+
+        if (!uppercaseRegex.containsMatchIn(password))
+            return "Password must have at least one uppercase letter"
+
+        if (!numberRegex.containsMatchIn(password))
+            return "Password must contain number"
+
+        return ""
     }
 }

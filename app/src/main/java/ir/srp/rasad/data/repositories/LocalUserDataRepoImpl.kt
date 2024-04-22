@@ -2,12 +2,14 @@ package ir.srp.rasad.data.repositories
 
 import ir.srp.rasad.core.Constants.SAVED_TARGETS_KEY
 import ir.srp.rasad.core.Constants.USER_ACCOUNT_INFO_KEY
+import ir.srp.rasad.core.Constants.USER_FORCE_RUN_INFO_KEY
 import ir.srp.rasad.core.Constants.USER_STATE_KEY
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.errors.local_errors.LoadLocalDataError
 import ir.srp.rasad.core.errors.local_errors.NotFoundTargetError
 import ir.srp.rasad.core.utils.JsonConverter
 import ir.srp.rasad.data.data_sources.UserLocalDataSource
+import ir.srp.rasad.domain.models.ForceRunDataModel
 import ir.srp.rasad.domain.models.PreferenceTargetModel
 import ir.srp.rasad.domain.models.TargetModel
 import ir.srp.rasad.domain.models.TargetPermissionsModel
@@ -84,6 +86,26 @@ class LocalUserDataRepoImpl @Inject constructor(
             Resource.Success(targetsModel)
         } else
             Resource.Error(notFoundTargetError)
+    }
+
+    override suspend fun saveForceRunInfo(forceRunDataModel: ForceRunDataModel) {
+        userLocalDataSource.saveString(
+            USER_FORCE_RUN_INFO_KEY,
+            jsonConverter.convertObjectToJsonString(forceRunDataModel)
+        )
+    }
+
+    override suspend fun loadForceRunInfo(): Resource<ForceRunDataModel?> {
+        val userForceRunInfo = userLocalDataSource.loadString(USER_FORCE_RUN_INFO_KEY, null)
+        return if (userForceRunInfo != null)
+            Resource.Success(
+                jsonConverter.convertJsonStringToObject(
+                    userForceRunInfo,
+                    ForceRunDataModel::class.java
+                ) as ForceRunDataModel
+            )
+        else
+            Resource.Success(null)
     }
 
     override suspend fun clearAllUserData() =

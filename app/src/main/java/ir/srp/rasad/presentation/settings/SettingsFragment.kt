@@ -40,7 +40,16 @@ class SettingsFragment : BaseFragment() {
     private fun initialize() {
         initProfileField()
         initPermittedObserversField()
+        initForceRun()
         initToolbarBackButton()
+    }
+
+    private fun initForceRun() {
+        binding.forceRun.setOnClickListener { onClickForceRun() }
+    }
+
+    private fun onClickForceRun() {
+        navController.navigate(R.id.forceRunFragment)
     }
 
     private fun initPermittedObserversField() {

@@ -26,7 +26,6 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.Constants.APP_STATE
@@ -35,6 +34,7 @@ import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVABLE
 import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVER
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
+import ir.srp.rasad.core.Constants.FORCE_START_SERVICE_OBSERVABLE
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.LOCATION_STATE
 import ir.srp.rasad.core.Constants.OBSERVER_LAST_RECEIVED_DATA
@@ -208,7 +208,6 @@ class MainService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-
         createNotificationChannel()
         CoroutineScope(io).launch {
             val userData = userInfoUseCase.loadUserAccountInfo().data
@@ -349,6 +348,24 @@ class MainService : Service() {
 
             STOP_SERVICE_OBSERVER -> {
                 observerLogout()
+            }
+
+            FORCE_START_SERVICE_OBSERVABLE -> {
+                if (!isObservableLogIn) {
+                    initReceivedTextDataActions()
+                    ServiceCompat.startForeground(
+                        this,
+                        NOTIFICATION_ID,
+                        createSimpleNotification(
+                            getString(R.string.app_name),
+                            getString(R.string.connecting_msg),
+                            true
+                        ),
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                    )
+                    isServiceStarted = true
+                    observableConnectToServer()
+                }
             }
         }
     }

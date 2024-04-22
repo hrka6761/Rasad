@@ -1,8 +1,9 @@
 package ir.srp.rasad.presentation.home
 
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.content.ComponentName
-import android.content.Context
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -33,10 +34,8 @@ import ir.srp.rasad.core.Constants.APP_STATE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVABLE
 import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVER
-import ir.srp.rasad.core.Constants.COARSE_RESULT_KEY
 import ir.srp.rasad.core.Constants.DENY_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.DISCONNECT
-import ir.srp.rasad.core.Constants.FINE_RESULT_KEY
 import ir.srp.rasad.core.Constants.GRANT_PERMISSION_ACTION
 import ir.srp.rasad.core.Constants.LOCATION_OFF_DIALOG_LABEL
 import ir.srp.rasad.core.Constants.LOCATION_STATE
@@ -1066,15 +1065,15 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             for (item in result) {
                 if (!item.value) {
                     val message = when (item.key) {
-                        COARSE_RESULT_KEY -> getString(R.string.snackbar_approximate_location_negative_msg)
-                        FINE_RESULT_KEY -> getString(R.string.snackbar_precise_location_negative_msg)
+                        ACCESS_COARSE_LOCATION -> getString(R.string.snackbar_approximate_location_negative_msg)
+                        ACCESS_FINE_LOCATION -> getString(R.string.snackbar_precise_location_negative_msg)
                         ACCESS_BACKGROUND_LOCATION -> getString(R.string.snackbar_background_location_negative_msg)
                         else -> getString(R.string.snackbar_notification_negative_msg)
                     }
 
                     showWarning(this@HomeFragment, message)
 
-                    if (item.key != FINE_RESULT_KEY)
+                    if (item.key != ACCESS_FINE_LOCATION)
                         return
                 }
             }

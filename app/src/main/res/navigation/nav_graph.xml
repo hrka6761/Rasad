@@ -76,6 +76,9 @@
         <action
             android:id="@+id/action_settingsFragment_to_observersFragment"
             app:destination="@id/observersFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_forceRunFragment"
+            app:destination="@id/forceRunFragment" />
     </fragment>
     <fragment
         android:id="@+id/profileFragment"
@@ -96,6 +99,15 @@
         tools:layout="@layout/fragment_observers">
         <action
             android:id="@+id/action_observersFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/forceRunFragment"
+        android:name="ir.srp.rasad.presentation.force_run.ForceRunFragment"
+        android:label="fragment_force_run"
+        tools:layout="@layout/fragment_force_run" >
+        <action
+            android:id="@+id/action_forceRunFragment_to_settingsFragment"
             app:destination="@id/settingsFragment" />
     </fragment>
 </navigation>

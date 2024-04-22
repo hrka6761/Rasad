@@ -6,13 +6,16 @@ import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.POST_NOTIFICATIONS
+import android.Manifest.permission.RECEIVE_SMS
 import android.os.Build
+import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import ir.srp.rasad.core.BaseFragment
 
+@RequiresApi(TIRAMISU)
 class PermissionManager(
     private val fragment: BaseFragment,
     private val callback: ActivityResultCallback<Map<String, Boolean>>,
@@ -36,19 +39,21 @@ class PermissionManager(
     fun hasApproximateLocationPermission() =
         isPermissionGranted(ACCESS_COARSE_LOCATION)
 
-    @RequiresApi(Build.VERSION_CODES.Q)
     fun hasBackgroundLocationPermission() = isPermissionGranted(ACCESS_BACKGROUND_LOCATION)
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun hasReceiveSMSPermission() = isPermissionGranted(RECEIVE_SMS)
+
     fun getNotificationPermission() =
         permissionsLauncher.launch(arrayOf(POST_NOTIFICATIONS))
 
     fun getBasicLocationPermission() =
         permissionsLauncher.launch(arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION))
 
-    @RequiresApi(Build.VERSION_CODES.Q)
     fun getBackgroundLocationPermission() =
         permissionsLauncher.launch(arrayOf(ACCESS_BACKGROUND_LOCATION))
+
+    fun getReceiveSMSPermission() =
+        permissionsLauncher.launch(arrayOf(RECEIVE_SMS))
 
 
     private fun isPermissionGranted(permission: String): Boolean =
