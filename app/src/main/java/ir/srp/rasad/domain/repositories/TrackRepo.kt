@@ -9,9 +9,9 @@ interface TrackRepo {
     suspend fun createChannel(
         url: String,
         successCallback: ((response: Response) -> Unit)?,
-        failCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        serverDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        clientDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
+        failCallback: ((t: Throwable?, response: Response?) -> Unit)?,
+        serverDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
+        clientDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
     )
 
     suspend fun removeChannel(
@@ -21,7 +21,7 @@ interface TrackRepo {
 
     suspend fun senData(
         data: WebsocketDataModel,
-        onSendMessageFail: ((t: Throwable, response: Response?) -> Unit)?,
+        onSendMessageFail: ((t: Throwable?, response: Response?) -> Unit)?,
     )
 
     suspend fun receiveData(

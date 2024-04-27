@@ -9,9 +9,9 @@ class TrackConnectionUseCase @Inject constructor(private val trackRepo: TrackRep
     suspend fun createChannel(
         url: String,
         successCallback: ((response: Response) -> Unit)?,
-        failCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        serverDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        clientDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
+        failCallback: ((t: Throwable?, response: Response?) -> Unit)?,
+        serverDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
+        clientDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
     ) = trackRepo.createChannel(
         url,
         successCallback,

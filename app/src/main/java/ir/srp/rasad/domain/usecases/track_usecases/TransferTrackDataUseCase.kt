@@ -10,7 +10,7 @@ class TransferTrackDataUseCase @Inject constructor(private val trackRepo: TrackR
 
     suspend fun sendData(
         data: WebsocketDataModel,
-        onSendMessageFail: ((t: Throwable, response: Response?) -> Unit)?,
+        onSendMessageFail: ((t: Throwable?, response: Response?) -> Unit)?,
     ) = trackRepo.senData(data, onSendMessageFail)
 
     suspend fun receiveData(

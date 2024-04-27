@@ -8,15 +8,15 @@ import okio.ByteString
 import javax.inject.Inject
 
 class TrackRepoImpl @Inject constructor(
-    private val userWebsocket: UserWebsocket
+    private val userWebsocket: UserWebsocket,
 ) : TrackRepo {
 
     override suspend fun createChannel(
         url: String,
         successCallback: ((response: Response) -> Unit)?,
-        failCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        serverDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
-        clientDisconnectCallback: ((t: Throwable, response: Response?) -> Unit)?,
+        failCallback: ((t: Throwable?, response: Response?) -> Unit)?,
+        serverDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
+        clientDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
     ) {
         userWebsocket.createConnection(
             url,
@@ -36,7 +36,7 @@ class TrackRepoImpl @Inject constructor(
 
     override suspend fun senData(
         data: WebsocketDataModel,
-        onSendMessageFail: ((t: Throwable, response: Response?) -> Unit)?,
+        onSendMessageFail: ((t: Throwable?, response: Response?) -> Unit)?,
     ) {
         userWebsocket.sendData(data, onSendMessageFail)
     }
