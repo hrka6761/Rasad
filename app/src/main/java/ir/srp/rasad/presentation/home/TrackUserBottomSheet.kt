@@ -11,12 +11,7 @@ import android.widget.AdapterView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import ir.srp.rasad.R
-import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_5_S
-import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_1_D
-import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_1_H
-import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_30_M
-import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_3_H
-import ir.srp.rasad.core.Constants.LOCATION_PERMISSION_TYPE_EVERY_5_M
+import ir.srp.rasad.core.Constants.AUTO_MODE_TYPE
 import ir.srp.rasad.core.Constants.SAVED_TARGETS_KEY
 import ir.srp.rasad.core.utils.Dialog.showSimpleDialog
 import ir.srp.rasad.core.utils.MessageViewer.showError
@@ -35,7 +30,7 @@ class TrackUserBottomSheet(
     private lateinit var binding: TrackUserBottomSheetLayoutBinding
     private lateinit var savedTargets: Array<ObserverTargetModel>
     private var savedTargetsSize: Int = 0
-    private var locationSendingInterval: Int = -1
+    private var locationMode: Int = -1
     private lateinit var selectedChips: MutableList<String>
 
 
@@ -43,7 +38,10 @@ class TrackUserBottomSheet(
         super.onCreate(savedInstanceState)
 
         val args = if (SDK_INT >= TIRAMISU)
-            requireArguments().getParcelableArray(SAVED_TARGETS_KEY, ObserverTargetModel::class.java)
+            requireArguments().getParcelableArray(
+                SAVED_TARGETS_KEY,
+                ObserverTargetModel::class.java
+            )
         else
             requireArguments().getParcelableArray(SAVED_TARGETS_KEY)
 
@@ -140,7 +138,7 @@ class TrackUserBottomSheet(
     }
 
     private fun initSpinner() {
-        binding.permissionTypes.onItemSelectedListener = SpinnerListener()
+        /*binding.permissionTypes.onItemSelectedListener = SpinnerListener()*/
     }
 
     private fun initRequestBottom() {
@@ -162,14 +160,14 @@ class TrackUserBottomSheet(
                 return
             }
 
-            if (locationSendingInterval == -1) {
-                showError(this, getString(R.string.snackbar_not_selected_location_interval))
+            /*if (locationMode == -1) {
+                showError(this, getString(R.string.snackbar_not_selected_location_mode_msg))
                 return
-            }
+            }*/
 
             val permission = TargetPermissionsModel(
                 TargetPermissionType.Location,
-                locationSendingInterval
+                AUTO_MODE_TYPE
             )
 
             val name = binding.nameEdt.text.toString().ifEmpty { binding.targetEdt.text.toString() }
@@ -205,7 +203,7 @@ class TrackUserBottomSheet(
 
         binding.nameEdt.text?.clear()
         binding.targetEdt.text?.clear()
-        binding.permissionTypes.setSelection(0)
+        /*binding.permissionTypes.setSelection(0)*/
     }
 
     private fun initNewTargetButton() {
@@ -226,14 +224,9 @@ class TrackUserBottomSheet(
             position: Int,
             id: Long,
         ) {
-            locationSendingInterval = when (position) {
+            locationMode = when (position) {
                 0 -> -1
-                1 -> LOCATION_PERMISSION_TYPE_EVERY_5_S
-                2 -> LOCATION_PERMISSION_TYPE_EVERY_5_M
-                3 -> LOCATION_PERMISSION_TYPE_EVERY_30_M
-                4 -> LOCATION_PERMISSION_TYPE_EVERY_1_H
-                5 -> LOCATION_PERMISSION_TYPE_EVERY_3_H
-                6 -> LOCATION_PERMISSION_TYPE_EVERY_1_D
+                1 -> AUTO_MODE_TYPE
                 else -> -1
             }
         }
