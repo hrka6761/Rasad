@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="location">
-        <item>Select the location sending interval</item>
-        <item>Every 5 seconds</item>
-        <item>Every 5 minutes</item>
-        <item>Every 30 minutes</item>
-        <item>Every 1 hour</item>
-        <item>Every 3 hours</item>
-        <item>Every 1 day</item>
+        <item>Select the location sending mode</item>
+        <item>Automatically every 5 seconds</item>
     </string-array>
 </resources>

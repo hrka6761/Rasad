@@ -29,6 +29,8 @@ import com.google.android.gms.location.LocationResult
 import dagger.hilt.android.AndroidEntryPoint
 import ir.srp.rasad.R
 import ir.srp.rasad.core.Constants.APP_STATE
+import ir.srp.rasad.core.Constants.AUTO_LOCATION_MODE_INTERVAL
+import ir.srp.rasad.core.Constants.AUTO_MODE_TYPE
 import ir.srp.rasad.core.Constants.CANCEL_OBSERVE
 import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVABLE
 import ir.srp.rasad.core.Constants.CANCEL_RECONNECT_OBSERVER
@@ -657,15 +659,10 @@ class MainService : Service() {
             TargetDataModel::class.java
         ) as TargetDataModel
 
-        val coordinate: String = when (targetDataModel.permissions.coordinate) {
-            5 -> "5 ${getString(R.string.seconds)}"
-            300, 1800 -> "${targetDataModel.permissions.coordinate / 60} ${getString(R.string.minutes)}"
-            3600, 10800 -> "${targetDataModel.permissions.coordinate / 3600} ${getString(R.string.hours)}"
-            86400 -> "1 ${getString(R.string.day)}"
+        val msg: String = when (targetDataModel.permissions.coordinate) {
+            AUTO_MODE_TYPE -> getString(R.string.permission_extend_notification_msg, data.username)
             else -> ""
         }
-
-        val msg = getString(R.string.permission_extend_notification_msg, data.username, coordinate)
 
         val permissionNotification = createPermissionNotification(
             getString(R.string.app_name),
@@ -724,10 +721,8 @@ class MainService : Service() {
      * Step 5 - Observable sends the data
      */
     private fun observableSendData(observerTargetData: ObserverTargetModel) {
-        val interval = observerTargetData.permissions.coordinate * 1000L
-
         fusedLocationClient.requestLocationUpdates(
-            getLocationRequest(interval),
+            getLocationRequest(AUTO_LOCATION_MODE_INTERVAL),
             locationCallback,
             Looper.getMainLooper()
         )
@@ -963,6 +958,7 @@ class MainService : Service() {
 
                     val locationData = jsonConverter.convertObjectToJsonString(dataModel)
                     val targets = observableTargets
+                        .filter { targetDataModel -> targetDataModel.permissions.coordinate == AUTO_MODE_TYPE }
                         .map { observableTargetModel -> observableTargetModel.targetUsername }
                         .toTypedArray()
 

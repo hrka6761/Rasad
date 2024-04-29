@@ -89,11 +89,11 @@
                 android:enabled="false"
                 android:text="@string/location" />
 
-            <androidx.appcompat.widget.AppCompatSpinner
+            <!--<androidx.appcompat.widget.AppCompatSpinner
                 android:id="@+id/permission_types"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:entries="@array/location" />
+                android:entries="@array/location" />-->
 
         </LinearLayout>
 
