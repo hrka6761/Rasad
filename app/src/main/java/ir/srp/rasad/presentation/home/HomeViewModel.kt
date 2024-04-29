@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import ir.srp.rasad.core.Resource
-import ir.srp.rasad.domain.models.TargetModel
+import ir.srp.rasad.domain.models.ObserverTargetModel
 import ir.srp.rasad.domain.usecases.preference_usecases.UserTargetsUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +19,8 @@ class HomeViewModel @Inject constructor(
     private val userTargetsUseCase: UserTargetsUseCase,
 ) : ViewModel() {
 
-    private val _targets: MutableStateFlow<Resource<HashSet<TargetModel>?>> = MutableStateFlow(Resource.Initial())
-    val targets: StateFlow<Resource<HashSet<TargetModel>?>> = _targets
+    private val _targets: MutableStateFlow<Resource<HashSet<ObserverTargetModel>?>> = MutableStateFlow(Resource.Initial())
+    val targets: StateFlow<Resource<HashSet<ObserverTargetModel>?>> = _targets
 
 
     fun loadTargets() {
@@ -30,7 +30,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun saveTargets(targets: HashSet<TargetModel>) {
+    fun saveTargets(targets: HashSet<ObserverTargetModel>) {
         viewModelScope.launch(io) {
             userTargetsUseCase.saveUserTargets(targets)
         }

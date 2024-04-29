@@ -19,10 +19,10 @@ object Constants {
     const val SERVICE_BUNDLE_KEY = "bundle"
     const val SERVICE_TYPE_KEY = "type"
     const val SERVICE_DATA_KEY = "data"
-    const val START_SERVICE_OBSERVABLE = "startService_observable"
-    const val START_SERVICE_OBSERVER = "startService_observer"
-    const val STOP_SERVICE_OBSERVABLE = "stopService_observable"
-    const val STOP_SERVICE_OBSERVER = "stopService_observer"
+    const val START_OBSERVABLE = "startService_observable"
+    const val START_OBSERVER = "startService_observer"
+    const val STOP_OBSERVABLE = "stopService_observable"
+    const val STOP_OBSERVER = "stopService_observer"
     const val GRANT_PERMISSION_ACTION = "grant_permission"
     const val DENY_PERMISSION_ACTION = "deny_permission"
     const val CLOSE_WEBSOCKET_STATUS_CODE = 1000
@@ -31,6 +31,8 @@ object Constants {
     const val GET_OBSERVER_REQ_TYPE = "getObservers"
     const val ADD_OBSERVER_REQ_TYPE = "addObserver"
     const val RECONNECT_INTERVAL = 3000L
+    const val PING_ATTEMPT_COUNT = 3
+    const val PING_INTERVAL = 3000L
     const val LOCATION_OFF_DIALOG_LABEL = "locationDialog"
 
     const val LOCATION_PERMISSION_TYPE_EVERY_5_S = 5

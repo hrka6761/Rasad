@@ -12,12 +12,16 @@ class TrackConnectionUseCase @Inject constructor(private val trackRepo: TrackRep
         failCallback: ((t: Throwable?, response: Response?) -> Unit)?,
         serverDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
         clientDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
+        pingAttemptCount: Int,
+        pingAttemptInterval: Long,
     ) = trackRepo.createChannel(
         url,
         successCallback,
         failCallback,
         serverDisconnectCallback,
-        clientDisconnectCallback
+        clientDisconnectCallback,
+        pingAttemptCount,
+        pingAttemptInterval,
     )
 
     suspend fun removeChannel(

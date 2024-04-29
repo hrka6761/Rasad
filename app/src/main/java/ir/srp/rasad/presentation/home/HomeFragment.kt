@@ -2,7 +2,6 @@ package ir.srp.rasad.presentation.home
 
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 import android.content.ComponentName
-import android.content.Context
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -95,10 +94,10 @@ import ir.srp.rasad.core.Constants.SERVICE_BUNDLE_KEY
 import ir.srp.rasad.core.Constants.SERVICE_DATA_KEY
 import ir.srp.rasad.core.Constants.SERVICE_STATE
 import ir.srp.rasad.core.Constants.SERVICE_TYPE_KEY
-import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
-import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
+import ir.srp.rasad.core.Constants.START_OBSERVABLE
+import ir.srp.rasad.core.Constants.START_OBSERVER
 import ir.srp.rasad.core.Constants.STATE_DISABLE
-import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
+import ir.srp.rasad.core.Constants.STOP_OBSERVABLE
 import ir.srp.rasad.core.Resource
 import ir.srp.rasad.core.utils.Dialog.dialogLabel
 import ir.srp.rasad.core.utils.Dialog.hideSimpleDialog
@@ -111,7 +110,8 @@ import ir.srp.rasad.core.utils.PermissionManager
 import ir.srp.rasad.databinding.FragmentHomeBinding
 import ir.srp.rasad.domain.models.DataModel
 import ir.srp.rasad.domain.models.ErrorDataModel
-import ir.srp.rasad.domain.models.TargetModel
+import ir.srp.rasad.domain.models.TargetDataModel
+import ir.srp.rasad.domain.models.ObserverTargetModel
 import ir.srp.rasad.domain.models.WebsocketDataModel
 import ir.srp.rasad.presentation.services.MainService
 import kotlinx.coroutines.launch
@@ -156,7 +156,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private var homeMessenger: Messenger? = null
     private lateinit var serviceMessenger: Messenger
     private val serviceConnection = ServiceConnection()
-    private lateinit var savedTargets: HashSet<TargetModel>
+    private lateinit var savedTargets: HashSet<ObserverTargetModel>
     val trackUserBottomSheet = TrackUserBottomSheet(this)
     private var marker: Marker? = null
 
@@ -200,12 +200,12 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         unBindService()
     }
 
-    override fun onRequest(isNewTarget: Boolean, vararg targets: TargetModel) {
+    override fun onRequest(isNewTarget: Boolean, vararg targets: ObserverTargetModel) {
         if (isNewTarget)
             for (target in targets)
                 saveNewTarget(target)
 
-        startServiceWithParam(START_SERVICE_OBSERVER, targets)
+        startServiceWithParam(START_OBSERVER, targets)
         disableViews()
         trackUserBottomSheet.dismiss()
     }
@@ -247,7 +247,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                         savedTargets = result.data!!
 
                         val args = Bundle()
-                        val targets = mutableListOf<TargetModel>()
+                        val targets = mutableListOf<ObserverTargetModel>()
                         for (target in savedTargets)
                             targets.add(target)
 
@@ -351,7 +351,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         }
 
         if (isObservableLogIn)
-            startServiceWithParam(STOP_SERVICE_OBSERVABLE)
+            startServiceWithParam(STOP_OBSERVABLE)
         else {
             if (!locationManager.isLocationEnabled) {
                 activity?.let {
@@ -367,7 +367,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 return
             }
 
-            startServiceWithParam(START_SERVICE_OBSERVABLE)
+            startServiceWithParam(START_OBSERVABLE)
         }
 
         disableViews()
@@ -417,7 +417,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
         if (this::savedTargets.isInitialized) {
             val args = Bundle()
-            val targets = mutableListOf<TargetModel>()
+            val targets = mutableListOf<ObserverTargetModel>()
 
             for (target in savedTargets)
                 targets.add(target)
@@ -452,7 +452,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         bundle.putString(SERVICE_TYPE_KEY, type)
         data?.let { bundle.putParcelableArray(SERVICE_DATA_KEY, data as Array<Parcelable>) }
         intent.putExtra(SERVICE_BUNDLE_KEY, bundle)
-        requireContext().startForegroundService(intent)
+        activity?.startForegroundService(intent)
     }
 
     private fun startServiceWithAction(action: String) {
@@ -461,7 +461,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         requireContext().startService(intent)
     }
 
-    private fun saveNewTarget(target: TargetModel) {
+    private fun saveNewTarget(target: ObserverTargetModel) {
         if (!this::savedTargets.isInitialized)
             savedTargets = HashSet()
         savedTargets.add(target)
@@ -493,10 +493,12 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun enableObservable() {
+        binding.onOffFab.setImageResource(R.drawable.power_off)
         binding.onOffFab.isEnabled = true
     }
 
     private fun disableObservable() {
+        binding.onOffFab.setImageResource(R.drawable.power_disable)
         binding.onOffFab.isEnabled = false
     }
 
@@ -564,6 +566,9 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     /**
      * Login success
+     *
+     * When reconnect, the cancelWaitingBtn become visible until connect success again
+     * and the waitingTxt text changed to 'Reconnecting'
      */
     private fun observableLogInSuccessAction() {
         binding.cancelWaitingBtn.visibility = View.GONE
@@ -588,21 +593,20 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
      * Receive Request
      */
     private fun observableReceiveRequestPermissionAction(data: WebsocketDataModel) {
-        var interval = 0
-        val permissionsList = data.data?.split(",")
-        for (permission in permissionsList!!) {
-            if (permission.contains(data.username))
-                interval = permission.replace(data.username, "").toInt()
+        val targetDataModel = jsonConverter.convertJsonStringToObject(
+            data.data as String,
+            TargetDataModel::class.java
+        ) as TargetDataModel
+
+        val coordinate: String = when (targetDataModel.permissions.coordinate) {
+            5 -> "5 ${getString(R.string.seconds)}"
+            300, 1800 -> "${targetDataModel.permissions.coordinate / 60} ${getString(R.string.minutes)}"
+            3600, 10800 -> "${targetDataModel.permissions.coordinate / 3600} ${getString(R.string.hours)}"
+            86400 -> "1 ${getString(R.string.day)}"
+            else -> ""
         }
 
-        val msg = if (interval == 0)
-            getString(R.string.permission_extend_notification_msg1, data.username)
-        else
-            getString(
-                R.string.permission_extend_notification_msg2,
-                data.username,
-                interval.toString()
-            )
+        val msg = getString(R.string.permission_extend_notification_msg, data.username, coordinate)
 
         activity?.let {
             showSimpleDialog(
@@ -917,7 +921,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
         if (this::savedTargets.isInitialized) {
             for (target in savedTargets) {
-                if (target.username == username) {
+                if (target.targetUsername == username) {
                     icon = target.markerIcon
                     break
                 }
@@ -1004,12 +1008,14 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             }
 
             OBSERVER_STATE_LOADING -> {
+                disableObservable()
                 disableViews()
             }
 
             OBSERVER_STATE_WAITING_RESPONSE -> {
-                disableViews()
                 observerSendRequestDataSuccessAction()
+                disableObservable()
+                disableViews()
             }
 
             OBSERVER_STATE_RECEIVING_DATA -> {
@@ -1023,6 +1029,11 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
                 val msg = Message.obtain(null, OBSERVER_REQUEST_LAST_RECEIVED_DATA)
                 homeMessenger?.send(msg)
+            }
+
+            OBSERVER_STATE_RELOADING -> {
+                disableObservable()
+                observerReconnectingActions()
             }
 
             OBSERVABLE_STATE_LOADING -> {
@@ -1042,20 +1053,19 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 binding.cancelWaitingBtn.visibility = View.GONE
                 binding.waitingTxt.text = getString(R.string.txt_waiting)
                 enableViews()
+                disableObserver()
             }
 
             OBSERVABLE_STATE_SENDING_DATA -> {
                 binding.onOffFab.setImageResource(R.drawable.power_on)
                 val msg = Message.obtain(null, OBSERVABLE_REQUEST_TARGETS)
                 homeMessenger?.send(msg)
+                disableObserver()
             }
 
             OBSERVABLE_STATE_RELOADING -> {
                 observableReconnectingActions()
-            }
-
-            OBSERVER_STATE_RELOADING -> {
-                observerReconnectingActions()
+                disableObserver()
             }
         }
     }
@@ -1081,9 +1091,9 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
             if (permissionManager.hasBackgroundLocationPermission() && permissionManager.hasNotificationPermission())
                 if (isServiceStarted)
-                    startServiceWithParam(STOP_SERVICE_OBSERVABLE)
+                    startServiceWithParam(STOP_OBSERVABLE)
                 else
-                    startServiceWithParam(START_SERVICE_OBSERVABLE)
+                    startServiceWithParam(START_OBSERVABLE)
         }
     }
 

@@ -102,10 +102,14 @@
     <string name="observer_receive_data_msg">you are tracking %1$s !!!!</string>
     <string name="observer_disable_setting_msg">Disable When you are tracking.</string>
 
-    <string name="permission_extend_notification_msg1">%1$s want to track your location when it changes.\nAre you ok ?</string>
-    <string name="permission_extend_notification_msg2">%1$s want to track your location every %2$s minutes.\nAre you ok ?</string>
     <string name="permission_collapse_notification_msg">Incoming Request permission from %1$s.</string>
     <string name="location_off_msg">App is paused !!!\nTurn on location …</string>
 
     <string name="location">location</string>
+    <string name="permission_extend_notification_msg">%1$s want to track your location every %2$s.\nAre you ok ?</string>
+    <string name="seconds">seconds</string>
+    <string name="minutes">minutes</string>
+    <string name="hours">hours</string>
+    <string name="day">day</string>
+    <string name="one_target_limitation_msg">You can choose one target only.</string>
 </resources>

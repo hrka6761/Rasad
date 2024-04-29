@@ -6,5 +6,5 @@ data class WebsocketDataModel(
     val type: WebSocketDataType,
     val username: String,
     val targets: Array<String>? = null,
-    val data: String? = null
+    val data: Any? = null
 )

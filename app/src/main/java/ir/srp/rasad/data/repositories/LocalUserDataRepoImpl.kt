@@ -9,7 +9,7 @@ import ir.srp.rasad.core.errors.local_errors.NotFoundTargetError
 import ir.srp.rasad.core.utils.JsonConverter
 import ir.srp.rasad.data.data_sources.UserLocalDataSource
 import ir.srp.rasad.domain.models.PreferenceTargetModel
-import ir.srp.rasad.domain.models.TargetModel
+import ir.srp.rasad.domain.models.ObserverTargetModel
 import ir.srp.rasad.domain.models.TargetPermissionsModel
 import ir.srp.rasad.domain.models.UserModel
 import ir.srp.rasad.domain.repositories.LocalUserDataRepo
@@ -47,13 +47,13 @@ class LocalUserDataRepoImpl @Inject constructor(
             Resource.Error(loadLocalDataError)
     }
 
-    override suspend fun saveUserTargets(targets: HashSet<TargetModel>) {
+    override suspend fun saveUserTargets(targets: HashSet<ObserverTargetModel>) {
         val targetsString = HashSet<String>()
 
         for (target in targets) {
             val permission = jsonConverter.convertObjectToJsonString(target.permissions)
             val model =
-                PreferenceTargetModel(target.name, target.username, target.markerIcon, permission)
+                PreferenceTargetModel(target.name, target.targetUsername, target.markerIcon, permission)
             val targetString = jsonConverter.convertObjectToJsonString(model)
             targetsString.add(targetString)
         }
@@ -61,8 +61,8 @@ class LocalUserDataRepoImpl @Inject constructor(
         userLocalDataSource.saveSet(SAVED_TARGETS_KEY, targetsString)
     }
 
-    override suspend fun loadUserTargets(): Resource<HashSet<TargetModel>?> {
-        val targetsModel = HashSet<TargetModel>()
+    override suspend fun loadUserTargets(): Resource<HashSet<ObserverTargetModel>?> {
+        val targetsModel = HashSet<ObserverTargetModel>()
         val targetsString = userLocalDataSource.loadSet(SAVED_TARGETS_KEY, null)
 
         return if (targetsString != null) {
@@ -75,10 +75,10 @@ class LocalUserDataRepoImpl @Inject constructor(
                     model.permissions,
                     TargetPermissionsModel::class.java
                 ) as TargetPermissionsModel
-                val targetModel =
-                    TargetModel(model.name, model.username, model.markerIcon, permission)
+                val observerTargetModel =
+                    ObserverTargetModel(model.name, model.username, model.markerIcon, permission)
 
-                targetsModel.add(targetModel)
+                targetsModel.add(observerTargetModel)
             }
 
             Resource.Success(targetsModel)

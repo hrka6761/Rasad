@@ -88,23 +88,26 @@ import ir.srp.rasad.core.Constants.OBSERVER_STATE_RECEIVING_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_WAITING_RESPONSE
 import ir.srp.rasad.core.Constants.OBSERVER_REQUEST_LAST_RECEIVED_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_STATE_RELOADING
+import ir.srp.rasad.core.Constants.PING_ATTEMPT_COUNT
+import ir.srp.rasad.core.Constants.PING_INTERVAL
 import ir.srp.rasad.core.Constants.RECONNECT_INTERVAL
 import ir.srp.rasad.core.Constants.SERVICE_BUNDLE_KEY
 import ir.srp.rasad.core.Constants.SERVICE_DATA_KEY
 import ir.srp.rasad.core.Constants.SERVICE_STATE
 import ir.srp.rasad.core.Constants.SERVICE_TYPE_KEY
-import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVABLE
-import ir.srp.rasad.core.Constants.START_SERVICE_OBSERVER
+import ir.srp.rasad.core.Constants.START_OBSERVABLE
+import ir.srp.rasad.core.Constants.START_OBSERVER
 import ir.srp.rasad.core.Constants.STATE_DISABLE
-import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVABLE
-import ir.srp.rasad.core.Constants.STOP_SERVICE_OBSERVER
+import ir.srp.rasad.core.Constants.STOP_OBSERVABLE
+import ir.srp.rasad.core.Constants.STOP_OBSERVER
 import ir.srp.rasad.core.Constants.WEBSOCKET_URL
 import ir.srp.rasad.core.WebSocketDataType
 import ir.srp.rasad.core.utils.JsonConverter
 import ir.srp.rasad.data.receivers.LocationStateReceiver
 import ir.srp.rasad.domain.models.DataModel
 import ir.srp.rasad.domain.models.ErrorDataModel
-import ir.srp.rasad.domain.models.TargetModel
+import ir.srp.rasad.domain.models.TargetDataModel
+import ir.srp.rasad.domain.models.ObserverTargetModel
 import ir.srp.rasad.domain.models.WebsocketDataModel
 import ir.srp.rasad.domain.usecases.preference_usecases.UserInfoUseCase
 import ir.srp.rasad.domain.usecases.track_usecases.TransferTrackDataUseCase
@@ -200,8 +203,8 @@ class MainService : Service() {
     private var isObservableLogIn = false
     private var isObserverLogIn = false
     private var isObserverTrackingStarted = false
-    private val observableTargets = HashSet<String>()
-    private val observerTargets = HashSet<TargetModel>()
+    private val observableTargets = HashSet<TargetDataModel>()
+    private val observerTargets = HashSet<TargetDataModel>()
     private var isReconnectCanceled = false
 
 
@@ -301,7 +304,7 @@ class MainService : Service() {
     private fun handleStartServiceWithParam(bundle: Bundle) {
         when (bundle.getString(SERVICE_TYPE_KEY)) {
 
-            START_SERVICE_OBSERVABLE -> {
+            START_OBSERVABLE -> {
                 ServiceCompat.startForeground(
                     this,
                     NOTIFICATION_ID,
@@ -313,21 +316,25 @@ class MainService : Service() {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
                 )
                 isServiceStarted = true
-                observableConnectToServer()
+                observableCreateConnection()
             }
 
-            STOP_SERVICE_OBSERVABLE -> {
+            STOP_OBSERVABLE -> {
                 observableLogout()
             }
 
-            START_SERVICE_OBSERVER -> {
+            START_OBSERVER -> {
                 val data = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                    bundle.getParcelableArray(SERVICE_DATA_KEY, TargetModel::class.java)
+                    bundle.getParcelableArray(SERVICE_DATA_KEY, ObserverTargetModel::class.java)
                 else
                     bundle.getParcelableArray(SERVICE_DATA_KEY)
 
                 for (item in data!!) {
-                    val target = item as TargetModel
+                    val observerTargetModel = item as ObserverTargetModel
+                    val target = TargetDataModel(
+                        targetUsername = observerTargetModel.targetUsername,
+                        permissions = observerTargetModel.permissions
+                    )
                     observerTargets.add(target)
                 }
 
@@ -343,10 +350,10 @@ class MainService : Service() {
                 )
 
                 isServiceStarted = true
-                observerConnectToServer()
+                observerCreateConnection()
             }
 
-            STOP_SERVICE_OBSERVER -> {
+            STOP_OBSERVER -> {
                 observerLogout()
             }
         }
@@ -386,13 +393,13 @@ class MainService : Service() {
     private fun initReceivedTextDataActions() {
         CoroutineScope(io).launch {
             transferTrackDataUseCase.receiveData(
-                onReceiveTextMessage = { text -> onReceiveTextMessageData(text) },
+                onReceiveTextMessage = { text -> onReceiveTextData(text) },
                 onReceiveBinaryMessage = null
             )
         }
     }
 
-    private fun onReceiveTextMessageData(textData: String) {
+    private fun onReceiveTextData(textData: String) {
         val websocketDataModel =
             jsonConverter.convertJsonStringToObject(
                 textData,
@@ -450,16 +457,22 @@ class MainService : Service() {
             }
 
             WebSocketDataType.RequestData -> {
-                observableTargets.add(websocketDataModel.username)
-                websocketDataModel.data?.let {
-                    observableSendData(it)
-                }
+                val observerTargetModel = jsonConverter.convertJsonStringToObject(
+                    websocketDataModel.data as String,
+                    ObserverTargetModel::class.java
+                ) as ObserverTargetModel
+                val targetDataModel = TargetDataModel(
+                    websocketDataModel.username,
+                    observerTargetModel.permissions
+                )
+                observableTargets.add(targetDataModel)
+                observableSendData(observerTargetModel)
             }
 
             WebSocketDataType.Failed -> {
                 val errorData = websocketDataModel.data?.let {
                     jsonConverter.convertJsonStringToObject(
-                        it,
+                        it as String,
                         ErrorDataModel::class.java
                     ) as ErrorDataModel
                 }
@@ -469,7 +482,7 @@ class MainService : Service() {
 
             WebSocketDataType.LogOutObservable -> {
                 for (target in observerTargets)
-                    if (target.username == websocketDataModel.username) {
+                    if (target.targetUsername == websocketDataModel.username) {
                         observerTargets.remove(target)
                         break
                     }
@@ -492,7 +505,14 @@ class MainService : Service() {
             }
 
             WebSocketDataType.LogOutObserver -> {
-                observableTargets.remove(websocketDataModel.username)
+                var target: TargetDataModel? = null
+                for (targetModel in observableTargets)
+                    if (targetModel.targetUsername == websocketDataModel.username) {
+                        target = targetModel
+                        break
+                    }
+                target?.let { observableTargets.remove(it) }
+
                 if (observableTargets.size <= 0)
                     sendMessageToHome(OBSERVABLE_DISCONNECT_ALL_TARGETS)
 
@@ -593,7 +613,7 @@ class MainService : Service() {
     /**
      * Step 1 - Observable connect
      */
-    private fun observableConnectToServer() {
+    private fun observableCreateConnection() {
         sendMessageToHome(OBSERVABLE_CONNECTING)
         CoroutineScope(io).launch {
             trackConnectionUseCase.createChannel(
@@ -601,7 +621,9 @@ class MainService : Service() {
                 successCallback = { observableConnectSuccessAction() },
                 failCallback = { _, _ -> observableConnectFailAction() },
                 serverDisconnectCallback = { _, _ -> observableDisconnectAction() },
-                clientDisconnectCallback = { _, _ -> observableDisconnectAction() }
+                clientDisconnectCallback = { _, _ -> observableDisconnectAction() },
+                pingAttemptCount = PING_ATTEMPT_COUNT,
+                pingAttemptInterval = PING_INTERVAL
             )
         }
         appState = OBSERVABLE_STATE_LOADING
@@ -630,17 +652,20 @@ class MainService : Service() {
      * Step 3 - Observable receives the permission request
      */
     private fun observableReceiveRequestPermission(data: WebsocketDataModel) {
-        var interval = 0
-        val permissionsList = data.data?.split(",")
-        for (permission in permissionsList!!) {
-            if (permission.contains(username))
-                interval = permission.replace(username, "").toInt()
+        val targetDataModel = jsonConverter.convertJsonStringToObject(
+            data.data as String,
+            TargetDataModel::class.java
+        ) as TargetDataModel
+
+        val coordinate: String = when (targetDataModel.permissions.coordinate) {
+            5 -> "5 ${getString(R.string.seconds)}"
+            300, 1800 -> "${targetDataModel.permissions.coordinate / 60} ${getString(R.string.minutes)}"
+            3600, 10800 -> "${targetDataModel.permissions.coordinate / 3600} ${getString(R.string.hours)}"
+            86400 -> "1 ${getString(R.string.day)}"
+            else -> ""
         }
 
-        val msg = if (interval == 0)
-            getString(R.string.permission_extend_notification_msg1, data.username)
-        else
-            getString(R.string.permission_extend_notification_msg2, data.username, interval)
+        val msg = getString(R.string.permission_extend_notification_msg, data.username, coordinate)
 
         val permissionNotification = createPermissionNotification(
             getString(R.string.app_name),
@@ -698,17 +723,11 @@ class MainService : Service() {
     /**
      * Step 5 - Observable sends the data
      */
-    private fun observableSendData(data: String) {
-        var interval = 0
-        val permissionsList = data.split(",")
-        for (permission in permissionsList) {
-            if (permission.contains(username))
-                interval = permission.replace(username, "").toInt()
-        }
-        val intervalMillis = interval * 1000L
+    private fun observableSendData(observerTargetData: ObserverTargetModel) {
+        val interval = observerTargetData.permissions.coordinate * 1000L
 
         fusedLocationClient.requestLocationUpdates(
-            getLocationRequest(intervalMillis),
+            getLocationRequest(interval),
             locationCallback,
             Looper.getMainLooper()
         )
@@ -722,11 +741,15 @@ class MainService : Service() {
      */
     private fun observableLogout() {
         CoroutineScope(io).launch {
+            val targets = observableTargets
+                .map { observableTargetModel -> observableTargetModel.targetUsername }
+                .toTypedArray()
+
             transferTrackDataUseCase.sendData(
                 data = WebsocketDataModel(
                     type = WebSocketDataType.LogOutObservable,
                     username = username,
-                    targets = observableTargets.toTypedArray(),
+                    targets = targets,
                     data = null
                 ),
                 onSendMessageFail = { _, _ -> observableSendMessageFailAction(WebSocketDataType.LogOutObservable) }
@@ -782,7 +805,9 @@ class MainService : Service() {
                     }
                 },
                 serverDisconnectCallback = { _, _ -> observableDisconnectAction() },
-                clientDisconnectCallback = { _, _ -> observableDisconnectAction() }
+                clientDisconnectCallback = { _, _ -> observableDisconnectAction() },
+                pingAttemptCount = PING_ATTEMPT_COUNT,
+                pingAttemptInterval = PING_INTERVAL
             )
         }
         sendMessageToHome(OBSERVABLE_RECONNECTING)
@@ -937,6 +962,9 @@ class MainService : Service() {
                     )
 
                     val locationData = jsonConverter.convertObjectToJsonString(dataModel)
+                    val targets = observableTargets
+                        .map { observableTargetModel -> observableTargetModel.targetUsername }
+                        .toTypedArray()
 
                     CoroutineScope(io).launch {
                         if (observableTargets.size > 0) {
@@ -944,7 +972,7 @@ class MainService : Service() {
                                 data = WebsocketDataModel(
                                     type = WebSocketDataType.Data,
                                     username = username,
-                                    targets = observableTargets.toTypedArray(),
+                                    targets = targets,
                                     data = locationData
                                 ),
                                 onSendMessageFail = { _, _ ->
@@ -994,7 +1022,7 @@ class MainService : Service() {
     /**
      * Step 1 -  Observer connect
      */
-    private fun observerConnectToServer() {
+    private fun observerCreateConnection() {
         sendMessageToHome(OBSERVER_CONNECTING)
         CoroutineScope(io).launch {
             trackConnectionUseCase.createChannel(
@@ -1002,7 +1030,9 @@ class MainService : Service() {
                 successCallback = { observerConnectSuccessAction() },
                 failCallback = { _, _ -> observerConnectFailAction() },
                 serverDisconnectCallback = { _, _ -> observerDisconnectAction() },
-                clientDisconnectCallback = { _, _ -> observerDisconnectAction() }
+                clientDisconnectCallback = { _, _ -> observerDisconnectAction() },
+                pingAttemptCount = PING_ATTEMPT_COUNT,
+                pingAttemptInterval = PING_INTERVAL
             )
         }
         appState = OBSERVER_STATE_LOADING
@@ -1030,15 +1060,12 @@ class MainService : Service() {
     /**
      * Step 3 - Observer sends request
      */
-    private fun observerSendRequestData(targets: Array<TargetModel>) {
+    private fun observerSendRequestData(targets: HashSet<TargetDataModel>) {
         val targetsUserName =
-            targets.map { targetModel -> targetModel.username }.toTypedArray()
-        val data = StringBuffer("")
-        for ((index, target) in targets.withIndex()) {
-            data.append(target.username + target.permissions.coordinate)
-            if (index != targets.size - 1)
-                data.append(",")
-        }
+            targets.map { targetModel -> targetModel.targetUsername }.toTypedArray()
+        val targetsData = mutableListOf<String>()
+        for (target in targets)
+            targetsData.add(jsonConverter.convertObjectToJsonString(target))
 
         CoroutineScope(io).launch {
             sendMessageToHome(OBSERVER_SENDING_REQUEST_DATA)
@@ -1047,7 +1074,7 @@ class MainService : Service() {
                     type = WebSocketDataType.RequestData,
                     username = username,
                     targets = targetsUserName,
-                    data = data.toString()
+                    data = targetsData
                 ),
                 onSendMessageFail = { _, _ ->
                     observerSendMessageFailAction(WebSocketDataType.RequestData)
@@ -1076,7 +1103,7 @@ class MainService : Service() {
     private fun observerReceiveDataAction(websocketDataModel: WebsocketDataModel) {
         val dataModel = websocketDataModel.data?.let {
             jsonConverter.convertJsonStringToObject(
-                it,
+                it as String,
                 DataModel::class.java
             )
         } as DataModel
@@ -1102,7 +1129,7 @@ class MainService : Service() {
      */
     private fun observerLogout() {
         val targetsUserName =
-            observerTargets.map { targetModel -> targetModel.username }.toTypedArray()
+            observerTargets.map { targetModel -> targetModel.targetUsername }.toTypedArray()
         CoroutineScope(io).launch {
             transferTrackDataUseCase.sendData(
                 data = WebsocketDataModel(
@@ -1165,7 +1192,9 @@ class MainService : Service() {
                     }
                 },
                 serverDisconnectCallback = { _, _ -> observerDisconnectAction() },
-                clientDisconnectCallback = { _, _ -> observerDisconnectAction() }
+                clientDisconnectCallback = { _, _ -> observerDisconnectAction() },
+                pingAttemptCount = PING_ATTEMPT_COUNT,
+                pingAttemptInterval = PING_INTERVAL
             )
         }
         sendMessageToHome(OBSERVER_RECONNECTING)
@@ -1187,7 +1216,7 @@ class MainService : Service() {
     private fun observerLoginSuccessAction() {
         sendMessageToHome(OBSERVER_LOGIN_SUCCESS)
         isObserverLogIn = true
-        observerSendRequestData(observerTargets.toTypedArray())
+        observerSendRequestData(observerTargets)
     }
 
     private fun observerLoginFailAction() {
