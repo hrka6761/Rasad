@@ -18,8 +18,8 @@ import javax.inject.Singleton
 @Singleton
 class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter) {
 
-    private var _connectRetriesNum: Int = 0
-    private var _connectRetriesInterval: Long = 0
+    private var _pingAttemptCount: Int = 0
+    private var _pingAttemptInterval: Long = 0
     private var failedPing = 0
     private val okHttpClient = OkHttpClient()
     private lateinit var request: Request
@@ -36,11 +36,11 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
         onConnectFail: ((t: Throwable?, response: Response?) -> Unit)?,
         onServerDisconnect: ((t: Throwable?, response: Response?) -> Unit)?,
         onClientDisconnect: ((t: Throwable?, response: Response?) -> Unit)?,
-        connectRetriesNum: Int = 3,
-        connectRetriesInterval: Long = 3000,
+        pingAttemptCount: Int,
+        pingAttemptInterval: Long,
     ) {
-        _connectRetriesNum = connectRetriesNum
-        _connectRetriesInterval = connectRetriesInterval
+        _pingAttemptCount = pingAttemptCount
+        _pingAttemptInterval = pingAttemptInterval
 
         listener.onConnectSuccess = onConnectSuccess
         listener.onConnectionFail = onConnectFail
@@ -96,7 +96,7 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
                     } else {
                         failedPing++
                         webSocket.send("ping")
-                        if (failedPing == _connectRetriesNum) {
+                        if (failedPing == _pingAttemptCount) {
                             pingTimer?.purge()
                             pingTimer?.cancel()
                             pingTimer = null
@@ -136,7 +136,7 @@ class UserWebsocket @Inject constructor(private val jsonConverter: JsonConverter
             onConnectSuccess?.let { it(response) }
             this.onConnectionFail = null
             isConnected = true
-            ping(_connectRetriesInterval)
+            ping(_pingAttemptInterval)
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {

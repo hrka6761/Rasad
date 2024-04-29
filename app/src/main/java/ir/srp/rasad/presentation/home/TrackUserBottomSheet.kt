@@ -23,16 +23,17 @@ import ir.srp.rasad.core.utils.MessageViewer.showError
 import ir.srp.rasad.core.utils.TargetPermissionType
 import ir.srp.rasad.core.utils.Validation.checkUsernameValidation
 import ir.srp.rasad.databinding.TrackUserBottomSheetLayoutBinding
-import ir.srp.rasad.domain.models.TargetModel
+import ir.srp.rasad.domain.models.ObserverTargetModel
 import ir.srp.rasad.domain.models.TargetPermissionsModel
 
 @Suppress("UNCHECKED_CAST", "DEPRECATION")
+@SuppressLint("UseCompatLoadingForDrawables")
 class TrackUserBottomSheet(
     private val listener: RequestTargetListener,
 ) : BottomSheetDialogFragment() {
 
     private lateinit var binding: TrackUserBottomSheetLayoutBinding
-    private lateinit var savedTargets: Array<TargetModel>
+    private lateinit var savedTargets: Array<ObserverTargetModel>
     private var savedTargetsSize: Int = 0
     private var locationSendingInterval: Int = -1
     private lateinit var selectedChips: MutableList<String>
@@ -42,11 +43,11 @@ class TrackUserBottomSheet(
         super.onCreate(savedInstanceState)
 
         val args = if (SDK_INT >= TIRAMISU)
-            requireArguments().getParcelableArray(SAVED_TARGETS_KEY, TargetModel::class.java)
+            requireArguments().getParcelableArray(SAVED_TARGETS_KEY, ObserverTargetModel::class.java)
         else
             requireArguments().getParcelableArray(SAVED_TARGETS_KEY)
 
-        savedTargets = args as Array<TargetModel>
+        savedTargets = args as Array<ObserverTargetModel>
         savedTargetsSize = savedTargets.size
         selectedChips = mutableListOf()
     }
@@ -88,7 +89,6 @@ class TrackUserBottomSheet(
         }
     }
 
-    @SuppressLint("UseCompatLoadingForDrawables")
     private fun showTargetsChip() {
         for (target in savedTargets) {
             val chip = Chip(requireContext())
@@ -108,7 +108,7 @@ class TrackUserBottomSheet(
                         chip.isChecked = false
                         showError(
                             this,
-                            "You can choose one target only."
+                            getString(R.string.one_target_limitation_msg)
                         )
                     }
                 } else {
@@ -177,7 +177,7 @@ class TrackUserBottomSheet(
             val username = binding.targetEdt.text.toString()
                 .replace(" ", "")
 
-            val target = TargetModel(
+            val target = ObserverTargetModel(
                 name,
                 username,
                 R.drawable.marker10,
@@ -187,7 +187,7 @@ class TrackUserBottomSheet(
             listener.onRequest(true, target)
         } else
             if (selectedChips.isNotEmpty()) {
-                val targets = mutableListOf<TargetModel>()
+                val targets = mutableListOf<ObserverTargetModel>()
                 for (chipName in selectedChips) {
                     for (target in savedTargets) {
                         if (target.name == chipName) {

@@ -4,9 +4,9 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class TargetModel(
+data class ObserverTargetModel(
     val name: String,
-    val username: String,
+    val targetUsername: String,
     val markerIcon: Int,
     val permissions: TargetPermissionsModel
 ) : Parcelable

@@ -6,7 +6,7 @@ import android.content.DialogInterface
 
 object Dialog {
 
-    private var dialog: AlertDialog? = null
+    private var simpleDialog: AlertDialog? = null
     var dialogLabel = ""
         private set
 
@@ -21,7 +21,7 @@ object Dialog {
     ): AlertDialog? {
         return if (!activity.isFinishing) {
             dialogLabel = label
-            dialog = AlertDialog.Builder(activity).setMessage(msg)
+            simpleDialog = AlertDialog.Builder(activity).setMessage(msg)
                 .setPositiveButton(positiveButton) { dialog, _ ->
                     positiveAction(dialog)
                 }
@@ -32,13 +32,13 @@ object Dialog {
                 .show()
             null
         } else
-            dialog
+            simpleDialog
     }
 
     fun hideSimpleDialog(activity: Activity) {
         if (!activity.isFinishing) {
-            dialog?.dismiss()
-            dialog = null
+            simpleDialog?.dismiss()
+            simpleDialog = null
             dialogLabel = ""
         }
     }

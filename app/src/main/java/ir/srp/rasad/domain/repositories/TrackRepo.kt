@@ -12,6 +12,8 @@ interface TrackRepo {
         failCallback: ((t: Throwable?, response: Response?) -> Unit)?,
         serverDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
         clientDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
+        pingAttemptCount: Int,
+        pingAttemptInterval: Long,
     )
 
     suspend fun removeChannel(

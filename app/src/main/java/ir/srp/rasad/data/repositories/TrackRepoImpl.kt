@@ -17,13 +17,17 @@ class TrackRepoImpl @Inject constructor(
         failCallback: ((t: Throwable?, response: Response?) -> Unit)?,
         serverDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
         clientDisconnectCallback: ((t: Throwable?, response: Response?) -> Unit)?,
+        pingAttemptCount: Int,
+        pingAttemptInterval: Long,
     ) {
         userWebsocket.createConnection(
             url,
             successCallback,
             failCallback,
             serverDisconnectCallback,
-            clientDisconnectCallback
+            clientDisconnectCallback,
+            pingAttemptCount,
+            pingAttemptInterval,
         )
     }
 
