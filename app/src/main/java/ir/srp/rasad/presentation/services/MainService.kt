@@ -18,6 +18,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -74,6 +75,7 @@ import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_DISCONNECT_ALL_TARGETS
+import ir.srp.rasad.core.Constants.OBSERVER_DISCONNECT_TARGET
 import ir.srp.rasad.core.Constants.OBSERVER_FAILURE
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_STATE
@@ -118,6 +120,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.neshan.mapsdk.model.Marker
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -197,7 +200,6 @@ class MainService : Service() {
     private lateinit var userToken: String
     private lateinit var userId: String
     private var requestPermissionData: WebsocketDataModel? = null
-    private var lastReceivedData: DataModel? = null
 
     //State params
     private var appState = STATE_DISABLE
@@ -208,6 +210,7 @@ class MainService : Service() {
     private val observableTargets = HashSet<TargetDataModel>()
     private val observerTargets = HashSet<TargetDataModel>()
     private var isReconnectCanceled = false
+    private val currentTargetsData = HashMap<String, DataModel>()
 
 
     override fun onCreate() {
@@ -463,10 +466,12 @@ class MainService : Service() {
                     websocketDataModel.data as String,
                     ObserverTargetModel::class.java
                 ) as ObserverTargetModel
+
                 val targetDataModel = TargetDataModel(
                     websocketDataModel.username,
                     observerTargetModel.permissions
                 )
+
                 observableTargets.add(targetDataModel)
                 observableSendData(observerTargetModel)
             }
@@ -483,6 +488,7 @@ class MainService : Service() {
             }
 
             WebSocketDataType.LogOutObservable -> {
+                sendMessageToHome(OBSERVER_DISCONNECT_TARGET, websocketDataModel.username)
                 for (target in observerTargets)
                     if (target.targetUsername == websocketDataModel.username) {
                         observerTargets.remove(target)
@@ -1103,7 +1109,7 @@ class MainService : Service() {
                 DataModel::class.java
             )
         } as DataModel
-        lastReceivedData = dataModel
+        currentTargetsData[dataModel.targetUsername] = dataModel
         sendMessageToHome(OBSERVER_RECEIVE_DATA, dataModel)
         appState = OBSERVER_STATE_RECEIVING_DATA
 
@@ -1358,10 +1364,10 @@ class MainService : Service() {
                 }
 
                 OBSERVER_REQUEST_LAST_RECEIVED_DATA -> {
-                    if (lastReceivedData != null)
+                    if (currentTargetsData.size > 0)
                         sendMessageToHome(
                             OBSERVER_LAST_RECEIVED_DATA,
-                            lastReceivedData
+                            currentTargetsData
                         )
                 }
 
