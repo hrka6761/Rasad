@@ -97,18 +97,9 @@ class TrackUserBottomSheet(
             chip.isCheckable = true
             chip.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    if (selectedChips.size < 1) {
-                        chip.isCloseIconVisible = false
-                        chip.isCheckedIconVisible = true
-                        selectedChips.add(chip.text.toString())
-                    } else {
-                        chip.isCheckedIconVisible = false
-                        chip.isChecked = false
-                        showError(
-                            this,
-                            getString(R.string.one_target_limitation_msg)
-                        )
-                    }
+                    chip.isCloseIconVisible = false
+                    chip.isCheckedIconVisible = true
+                    selectedChips.add(chip.text.toString())
                 } else {
                     chip.isCloseIconVisible = true
                     chip.isCheckedIconVisible = false

@@ -73,6 +73,7 @@ import ir.srp.rasad.core.Constants.OBSERVER_CONNECTING
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_FAIL
 import ir.srp.rasad.core.Constants.OBSERVER_CONNECT_SUCCESS
 import ir.srp.rasad.core.Constants.OBSERVER_DISCONNECT_ALL_TARGETS
+import ir.srp.rasad.core.Constants.OBSERVER_DISCONNECT_TARGET
 import ir.srp.rasad.core.Constants.OBSERVER_FAILURE
 import ir.srp.rasad.core.Constants.OBSERVER_LAST_RECEIVED_DATA
 import ir.srp.rasad.core.Constants.OBSERVER_LOGIN_FAIL
@@ -159,7 +160,6 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private val serviceConnection = ServiceConnection()
     private lateinit var savedTargets: HashSet<ObserverTargetModel>
     val trackUserBottomSheet = TrackUserBottomSheet(this)
-    private var marker: Marker? = null
 
     @Inject
     lateinit var locationManager: LocationManager
@@ -170,6 +170,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     private var isObservableLogIn = false
     private var isObserverLogIn = false
     private var isObserverTrackStarted = false
+    private val currentTargets = HashMap<String, Marker>()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -405,13 +406,14 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             val msg = Message.obtain(null, CANCEL_OBSERVE)
             homeMessenger?.send(msg)
             enableObservable()
-            binding.map.removeMarker(marker)
+            for (target in currentTargets)
+                binding.map.removeMarker(target.value)
+            currentTargets.clear()
             binding.addMemberFab.text = getString(R.string.btn_txt_track_other)
             binding.addMemberFab.setIconResource(R.drawable.add)
             isObserverTrackStarted = false
             isObserverLogIn = false
             isServiceStarted = false
-            marker = null
 
             return
         }
@@ -850,43 +852,51 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
      * Receive data
      */
     private fun observerReceiveDataAction(data: DataModel) {
-        if (marker == null) {
+        if (currentTargets.containsKey(data.targetUsername))
+            currentTargets[data.targetUsername]?.latLng = LatLng(data.latitude, data.longitude)
+        else {
             val markerIcon = getTargetMarkerIcon(data.targetUsername)
             binding.map.moveCamera(LatLng(data.latitude, data.longitude), 2f)
-            marker = createMarker(LatLng(data.latitude, data.longitude), markerIcon)
+            val marker = createMarker(LatLng(data.latitude, data.longitude), markerIcon)
+            currentTargets[data.targetUsername] = marker
             binding.map.addMarker(marker)
-            enableViews()
-            disableObservable()
-            binding.cancelWaitingBtn.visibility = View.GONE
-            binding.waitingTxt.text = getString(R.string.txt_waiting)
-            binding.addMemberFab.text = getString(R.string.btn_txt_stop_track)
-            binding.addMemberFab.setIconResource(R.drawable.stop)
-            isObserverTrackStarted = true
-        } else {
-            binding.map.moveCamera(LatLng(data.latitude, data.longitude), 2f)
-            marker?.latLng = LatLng(data.latitude, data.longitude)
+            if (currentTargets.size == 1) {
+                enableViews()
+                disableObservable()
+                binding.cancelWaitingBtn.visibility = View.GONE
+                binding.waitingTxt.text = getString(R.string.txt_waiting)
+                binding.addMemberFab.text = getString(R.string.btn_txt_stop_track)
+                binding.addMemberFab.setIconResource(R.drawable.stop)
+                isObserverTrackStarted = true
+            }
         }
     }
 
     /**
      * Receive last data
      */
-    private fun lastReceivedDataAction(lastReceivedData: DataModel) {
-        if (marker == null) {
-            val markerIcon = getTargetMarkerIcon(lastReceivedData.targetUsername)
+    private fun lastReceivedDataAction(lastReceivedData: HashMap<String, DataModel>) {
+        for (data in lastReceivedData) {
+            val targetUsername = data.key
+            val targetData = data.value
+
+            val markerIcon = getTargetMarkerIcon(targetUsername)
+
             binding.map.moveCamera(
                 LatLng(
-                    lastReceivedData.latitude,
-                    lastReceivedData.longitude
+                    targetData.latitude,
+                    targetData.longitude
                 ), 2f
             )
-            marker = createMarker(
+
+            val marker = createMarker(
                 LatLng(
-                    lastReceivedData.latitude,
-                    lastReceivedData.longitude
+                    targetData.latitude,
+                    targetData.longitude
                 ), markerIcon
             )
             binding.map.addMarker(marker)
+            currentTargets[targetUsername] = marker
         }
     }
 
@@ -927,18 +937,24 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         return icon
     }
 
+    private fun observerDisconnectTargetAction(targetUsername: String) {
+        binding.map.removeMarker(currentTargets[targetUsername])
+        currentTargets.remove(targetUsername)
+    }
+
     /**
      * Disconnect all observables
      */
     private fun observerDisconnectAllTargetAction() {
-        if (marker != null)
-            binding.map.removeMarker(marker)
+        for (target in currentTargets)
+            binding.map.removeMarker(target.value)
+
+        currentTargets.clear()
         isServiceStarted = false
         isObserverLogIn = false
         isObserverTrackStarted = false
         binding.addMemberFab.text = getString(R.string.btn_txt_track_other)
         binding.addMemberFab.setIconResource(R.drawable.add)
-        marker = null
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.waitingTxt.text = getString(R.string.txt_waiting)
         enableObservable()
@@ -950,23 +966,26 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
 
     private fun disconnectAction() {
+        for (target in currentTargets)
+            binding.map.removeMarker(target.value)
+
+        currentTargets.clear()
         isServiceStarted = false
         isObservableLogIn = false
         isObserverLogIn = false
         isObserverTrackStarted = false
+
         if (dialogLabel != LOCATION_OFF_DIALOG_LABEL)
             activity?.let { hideSimpleDialog(it) }
+
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.addMemberFab.setIconResource(R.drawable.add)
-        if (marker != null) {
-            binding.map.removeMarker(marker)
-            marker = null
-        }
         binding.waitingTxt.text = getString(R.string.txt_waiting)
         binding.cancelWaitingBtn.visibility = View.GONE
         binding.addMemberFab.text = getString(R.string.btn_txt_track_other)
         binding.onOffFab.setImageResource(R.drawable.power_off)
         binding.trackersContainer.visibility = View.GONE
+
         enableObservable()
         enableObserver()
         enableViews()
@@ -1251,6 +1270,10 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                     observerSendRequestDataFailAction()
                 }
 
+                OBSERVER_DISCONNECT_TARGET -> {
+                    observerDisconnectTargetAction(msg.obj as String)
+                }
+
                 OBSERVER_DISCONNECT_ALL_TARGETS -> {
                     observerDisconnectAllTargetAction()
                 }
@@ -1260,7 +1283,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                 }
 
                 OBSERVER_LAST_RECEIVED_DATA -> {
-                    lastReceivedDataAction(msg.obj as DataModel)
+                    lastReceivedDataAction(msg.obj as HashMap<String, DataModel>)
                 }
 
                 OBSERVER_FAILURE -> {
