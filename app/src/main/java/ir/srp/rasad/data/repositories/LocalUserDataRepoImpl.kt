@@ -53,7 +53,7 @@ class LocalUserDataRepoImpl @Inject constructor(
         for (target in targets) {
             val permission = jsonConverter.convertObjectToJsonString(target.permissions)
             val model =
-                PreferenceTargetModel(target.name, target.targetUsername, target.markerIcon, permission)
+                PreferenceTargetModel(target.name, target.targetUsername, permission)
             val targetString = jsonConverter.convertObjectToJsonString(model)
             targetsString.add(targetString)
         }
@@ -76,7 +76,7 @@ class LocalUserDataRepoImpl @Inject constructor(
                     TargetPermissionsModel::class.java
                 ) as TargetPermissionsModel
                 val observerTargetModel =
-                    ObserverTargetModel(model.name, model.username, model.markerIcon, permission)
+                    ObserverTargetModel(model.name, model.username, permission)
 
                 targetsModel.add(observerTargetModel)
             }
