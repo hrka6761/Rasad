@@ -7,6 +7,5 @@ import kotlinx.parcelize.Parcelize
 data class ObserverTargetModel(
     val name: String,
     val targetUsername: String,
-    val markerIcon: Int,
     val permissions: TargetPermissionsModel
 ) : Parcelable

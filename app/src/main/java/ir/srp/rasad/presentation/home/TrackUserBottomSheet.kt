@@ -169,7 +169,6 @@ class TrackUserBottomSheet(
             val target = ObserverTargetModel(
                 name,
                 username,
-                R.drawable.marker10,
                 permission
             )
 

@@ -4,7 +4,11 @@ import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 import android.content.ComponentName
 import android.content.Context.BIND_AUTO_CREATE
 import android.content.Intent
-import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
 import android.location.LocationManager
 import android.os.Build.VERSION_CODES.TIRAMISU
 import android.os.Bundle
@@ -855,9 +859,9 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         if (currentTargets.containsKey(data.targetUsername))
             currentTargets[data.targetUsername]?.latLng = LatLng(data.latitude, data.longitude)
         else {
-            val markerIcon = getTargetMarkerIcon(data.targetUsername)
             binding.map.moveCamera(LatLng(data.latitude, data.longitude), 2f)
-            val marker = createMarker(LatLng(data.latitude, data.longitude), markerIcon)
+            val observableName = findNameByUsername(data.targetUsername)
+            val marker = createMarker(LatLng(data.latitude, data.longitude), observableName)
             currentTargets[data.targetUsername] = marker
             binding.map.addMarker(marker)
             if (currentTargets.size == 1) {
@@ -872,6 +876,17 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         }
     }
 
+    private fun findNameByUsername(targetUsername: String): String {
+        var targetName = ""
+        for (target in savedTargets) {
+            if (target.targetUsername == targetUsername) {
+                targetName = target.name
+            }
+        }
+
+        return targetName
+    }
+
     /**
      * Receive last data
      */
@@ -880,27 +895,25 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             val targetUsername = data.key
             val targetData = data.value
 
-            val markerIcon = getTargetMarkerIcon(targetUsername)
-
             binding.map.moveCamera(
                 LatLng(
                     targetData.latitude,
                     targetData.longitude
                 ), 2f
             )
-
+            val observableName = findNameByUsername(targetUsername)
             val marker = createMarker(
                 LatLng(
                     targetData.latitude,
                     targetData.longitude
-                ), markerIcon
+                ), observableName
             )
             binding.map.addMarker(marker)
             currentTargets[targetUsername] = marker
         }
     }
 
-    private fun createMarker(loc: LatLng, markerIcon: Int): Marker {
+    private fun createMarker(loc: LatLng, username: String): Marker {
         val animStBl = AnimationStyleBuilder()
         animStBl.fadeAnimationType = AnimationType.ANIMATION_TYPE_SMOOTHSTEP
         animStBl.sizeAnimationType = AnimationType.ANIMATION_TYPE_SPRING
@@ -910,11 +923,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
         val markStCr = MarkerStyleBuilder()
         markStCr.size = 30f
-        markStCr.bitmap = BitmapUtils.createBitmapFromAndroidBitmap(
-            BitmapFactory.decodeResource(
-                resources, markerIcon
-            )
-        )
+        markStCr.bitmap = BitmapUtils.createBitmapFromAndroidBitmap(createMarkerIcon(username))
 
         markStCr.animationStyle = animSt
         val markSt = markStCr.buildStyle()
@@ -922,19 +931,55 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         return Marker(loc, markSt)
     }
 
-    private fun getTargetMarkerIcon(username: String): Int {
-        var icon: Int = R.drawable.marker10
+    private fun createMarkerIcon(text: String): Bitmap {
+        val textSize = 8f
+        val arrowVerticalSpace = 32f
+        val arrowHeight = 15f
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val fontMetrics = paint.fontMetrics
+        val textWidth = paint.measureText(text)
+        val textHeight = fontMetrics.descent - fontMetrics.ascent
+        val charsSpace = 2f
+        val totalCharsSpace = text.length * charsSpace
 
-        if (this::savedTargets.isInitialized) {
-            for (target in savedTargets) {
-                if (target.targetUsername == username) {
-                    icon = target.markerIcon
-                    break
-                }
-            }
+        paint.textSize = textSize
+        paint.color = Color.RED
+        paint.isAntiAlias = true
+        paint.isFilterBitmap = true
+        paint.textAlign = Paint.Align.CENTER
+
+        val bitmapHeight = (textWidth + totalCharsSpace + arrowVerticalSpace).toInt()
+        val bitmapWidth = textHeight.toInt()
+
+        val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val startX = bitmapWidth / 4f
+        var startY = 10f
+
+        for (char in text) {
+            canvas.save()
+            canvas.rotate(90f, startX, startY)
+            canvas.drawText(char.toString(), startX, startY, paint)
+            canvas.restore()
+            startY += paint.measureText(char.toString()) + charsSpace
         }
 
-        return icon
+        val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        arrowPaint.isFilterBitmap = true
+        arrowPaint.isAntiAlias = true
+        arrowPaint.color = Color.BLUE
+
+        val arrowPath = Path().apply {
+            moveTo((bitmapWidth / 2f), bitmapHeight.toFloat())
+            lineTo((bitmapWidth.toFloat()), bitmapHeight - arrowHeight)
+            lineTo(0f, bitmapHeight - arrowHeight)
+            close()
+        }
+
+        canvas.drawPath(arrowPath, arrowPaint)
+
+        return bitmap
     }
 
     private fun observerDisconnectTargetAction(targetUsername: String) {
