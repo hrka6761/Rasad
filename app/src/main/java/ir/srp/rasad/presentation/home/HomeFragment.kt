@@ -954,7 +954,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
     }
 
     private fun createMarkerIcon(text: String): Bitmap {
-        val textSize = 8f
+        val textSize = 12f
         val arrowVerticalSpace = 32f
         val arrowHeight = 15f
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -976,7 +976,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
         val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
-        val startX = bitmapWidth / 4f
+        val startX = bitmapWidth / 5f
         var startY = 10f
 
         for (char in text) {
