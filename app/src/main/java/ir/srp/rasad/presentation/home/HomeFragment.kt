@@ -262,10 +262,12 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
                             args.putParcelableArray(SAVED_TARGETS_KEY, targets.toTypedArray())
                             trackUserBottomSheet.arguments = args
-                            trackUserBottomSheet.show(
-                                requireActivity().supportFragmentManager,
-                                trackUserBottomSheet.tag
-                            )
+                            if (!trackUserBottomSheet.isBottomSheetOpen()) {
+                                trackUserBottomSheet.show(
+                                    requireActivity().supportFragmentManager,
+                                    trackUserBottomSheet.tag
+                                )
+                            }
                         }
                     }
 
@@ -435,10 +437,12 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
             args.putParcelableArray(SAVED_TARGETS_KEY, targets.toTypedArray())
             trackUserBottomSheet.arguments = args
-            trackUserBottomSheet.show(
-                requireActivity().supportFragmentManager,
-                trackUserBottomSheet.tag
-            )
+            if (!trackUserBottomSheet.isBottomSheetOpen()) {
+                trackUserBottomSheet.show(
+                    requireActivity().supportFragmentManager,
+                    trackUserBottomSheet.tag
+                )
+            }
         } else
             viewModel.loadTargets()
     }

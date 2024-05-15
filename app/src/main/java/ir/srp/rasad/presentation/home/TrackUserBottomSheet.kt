@@ -67,6 +67,9 @@ class TrackUserBottomSheet(
     }
 
 
+    fun isBottomSheetOpen() = dialog != null && dialog!!.isShowing
+
+
     private fun initialize() {
         initSheet()
         initSpinner()
