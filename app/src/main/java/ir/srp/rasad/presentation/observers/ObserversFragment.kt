@@ -174,6 +174,7 @@ class ObserversFragment :
                         )
                         viewModel.getObservers(userData.token!!, observerOperationModel)
                         requestType = GET_OBSERVER_REQ_TYPE
+                        binding.noList.visibility = View.GONE
                     }
 
                     is Resource.Error -> {
