@@ -1,5 +1,6 @@
 package ir.srp.rasad.presentation.home
 
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +22,7 @@ class HomeViewModel @Inject constructor(
 
     private val _targets: MutableStateFlow<Resource<HashSet<ObserverTargetModel>?>> = MutableStateFlow(Resource.Initial())
     val targets: StateFlow<Resource<HashSet<ObserverTargetModel>?>> = _targets
+    val isTargetsLoaded: MutableLiveData<Boolean> = MutableLiveData(false)
 
 
     fun loadTargets() {

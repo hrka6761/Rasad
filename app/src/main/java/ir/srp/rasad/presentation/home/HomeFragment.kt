@@ -252,17 +252,21 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
                         savedTargets = HashSet()
                         savedTargets = result.data!!
 
-                        val args = Bundle()
-                        val targets = mutableListOf<ObserverTargetModel>()
-                        for (target in savedTargets)
-                            targets.add(target)
+                        if (isObserverTrackStarted)
+                            viewModel.isTargetsLoaded.postValue(true)
+                        else {
+                            val args = Bundle()
+                            val targets = mutableListOf<ObserverTargetModel>()
+                            for (target in savedTargets)
+                                targets.add(target)
 
-                        args.putParcelableArray(SAVED_TARGETS_KEY, targets.toTypedArray())
-                        trackUserBottomSheet.arguments = args
-                        trackUserBottomSheet.show(
-                            requireActivity().supportFragmentManager,
-                            trackUserBottomSheet.tag
-                        )
+                            args.putParcelableArray(SAVED_TARGETS_KEY, targets.toTypedArray())
+                            trackUserBottomSheet.arguments = args
+                            trackUserBottomSheet.show(
+                                requireActivity().supportFragmentManager,
+                                trackUserBottomSheet.tag
+                            )
+                        }
                     }
 
                     is Resource.Error -> {
@@ -856,15 +860,19 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
      * Receive data
      */
     private fun observerReceiveDataAction(data: DataModel) {
-        if (currentTargets.containsKey(data.targetUsername))
-            currentTargets[data.targetUsername]?.latLng = LatLng(data.latitude, data.longitude)
-        else {
-            binding.map.moveCamera(LatLng(data.latitude, data.longitude), 2f)
+        if (currentTargets.containsKey(data.targetUsername)) {
+            val latLng = LatLng(data.latitude, data.longitude)
+            currentTargets[data.targetUsername]?.latLng = latLng
+            if (currentTargets.size == 1)
+                binding.map.moveCamera(latLng, 2f)
+        } else {
+            val latLng = LatLng(data.latitude, data.longitude)
+            binding.map.moveCamera(latLng, 2f)
             val observableName = findNameByUsername(data.targetUsername)
-            val marker = createMarker(LatLng(data.latitude, data.longitude), observableName)
+            val marker = createMarker(latLng, observableName)
             currentTargets[data.targetUsername] = marker
             binding.map.addMarker(marker)
-            if (currentTargets.size == 1) {
+            if (!isObserverTrackStarted) {
                 enableViews()
                 disableObservable()
                 binding.cancelWaitingBtn.visibility = View.GONE
@@ -878,11 +886,15 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
 
     private fun findNameByUsername(targetUsername: String): String {
         var targetName = ""
-        for (target in savedTargets) {
-            if (target.targetUsername == targetUsername) {
-                targetName = target.name
+
+        if (this::savedTargets.isInitialized)
+            for (target in savedTargets) {
+                if (target.targetUsername == targetUsername) {
+                    targetName = target.name
+                }
             }
-        }
+        else
+            targetName = targetUsername
 
         return targetName
     }
@@ -891,26 +903,32 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
      * Receive last data
      */
     private fun lastReceivedDataAction(lastReceivedData: HashMap<String, DataModel>) {
-        for (data in lastReceivedData) {
-            val targetUsername = data.key
-            val targetData = data.value
+        viewModel.isTargetsLoaded.observe(this) {
+            if (it) {
+                for (data in lastReceivedData) {
+                    val targetUsername = data.key
+                    val targetData = data.value
 
-            binding.map.moveCamera(
-                LatLng(
-                    targetData.latitude,
-                    targetData.longitude
-                ), 2f
-            )
-            val observableName = findNameByUsername(targetUsername)
-            val marker = createMarker(
-                LatLng(
-                    targetData.latitude,
-                    targetData.longitude
-                ), observableName
-            )
-            binding.map.addMarker(marker)
-            currentTargets[targetUsername] = marker
+                    binding.map.moveCamera(
+                        LatLng(
+                            targetData.latitude,
+                            targetData.longitude
+                        ), 2f
+                    )
+                    val observableName = findNameByUsername(targetUsername)
+                    val marker = createMarker(
+                        LatLng(
+                            targetData.latitude,
+                            targetData.longitude
+                        ), observableName
+                    )
+                    binding.map.addMarker(marker)
+                    currentTargets[targetUsername] = marker
+                }
+            }
         }
+
+        viewModel.loadTargets()
     }
 
     private fun createMarker(loc: LatLng, username: String): Marker {
@@ -961,6 +979,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             canvas.save()
             canvas.rotate(90f, startX, startY)
             canvas.drawText(char.toString(), startX, startY, paint)
+            canvas.drawText(char.toString(), startX, startY, paint)
             canvas.restore()
             startY += paint.measureText(char.toString()) + charsSpace
         }
@@ -977,6 +996,7 @@ class HomeFragment : BaseFragment(), RequestTargetListener {
             close()
         }
 
+        canvas.drawPath(arrowPath, arrowPaint)
         canvas.drawPath(arrowPath, arrowPaint)
 
         return bitmap
